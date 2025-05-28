@@ -23,5 +23,11 @@ OLLAMA_REQUEST_TIMEOUT_SECONDS = int(os.getenv('OLLAMA_REQUEST_TIMEOUT_SECONDS',
 # Task Management
 TASK_STATUS_DICT = {} # Mantém o status das tarefas de transcrição/insights
 
+# Diarization Configuration
+ENABLE_SPEAKER_DIARIZATION = os.getenv('ENABLE_SPEAKER_DIARIZATION', 'true').lower() == 'true'
+DEFAULT_MIN_SPEAKERS = int(os.getenv('DEFAULT_MIN_SPEAKERS', 1))
+DEFAULT_MAX_SPEAKERS = int(os.getenv('DEFAULT_MAX_SPEAKERS', 10))
+HUGGINGFACE_TOKEN = os.getenv('HUGGINGFACE_HUB_TOKEN', None)  # Token para modelos que requerem autenticação
+
 # Outras configurações podem ser adicionadas aqui
 # Por exemplo, configurações de logging, chaves de API (se aplicável no futuro), etc.

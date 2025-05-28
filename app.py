@@ -47,17 +47,26 @@ def process_audio_task(file_path, task_id, original_filename):
             logger.error(f"Task {task_id}: Arquivo {file_path} não encontrado para processamento.") # Adicionado
             return
 
-        transcribed_text, error = whisper_service.transcribe_audio(file_path)
+        # Executar transcrição com diarização se solicitado
+        include_diarization = task_service.get_task_option(task_id, 'include_diarization', False)
+        transcription_result, error = whisper_service.transcribe_audio(
+            file_path,
+            include_timestamps=True,
+            include_diarization=include_diarization
+        )
 
         if error:
             task_service.update_task_status(task_id, status="error", message=error)
-            logger.error(f"Task {task_id}: Erro na transcrição Whisper: {error}") # Adicionado
+            logger.error(f"Task {task_id}: Erro na transcrição Whisper: {error}")
             return
 
-        if transcribed_text is None:
-            task_service.update_task_status(task_id, status="error", message="Transcrição retornou texto vazio.")
-            logger.error(f"Task {task_id}: Transcrição retornou texto vazio para o arquivo {original_filename}.") # Adicionado
+        if transcription_result is None:
+            task_service.update_task_status(task_id, status="error", message="Transcrição retornou resultado vazio.")
+            logger.error(f"Task {task_id}: Transcrição retornou resultado vazio para o arquivo {original_filename}.")
             return
+
+        # Extrair texto principal para compatibilidade
+        transcribed_text = transcription_result.get('text', '')
 
         # Verificar conexão e modelos Ollama
         available_models, ollama_conn, _ = ollama_service.get_available_ollama_models()
@@ -66,6 +75,7 @@ def process_audio_task(file_path, task_id, original_filename):
             task_id,
             status="transcription_completed",
             text=transcribed_text,
+            transcription_data=transcription_result,  # Dados completos da transcrição
             message="Transcrição concluída! Pronto para gerar insights.",
             current_prompt=DEFAULT_INSIGHTS_PROMPT,
             available_ollama_models=available_models,
@@ -136,6 +146,10 @@ def upload_file_route():
     task_id = task_service.create_task()
     original_filename = file.filename
 
+    # Processa parâmetro de diarização
+    enable_diarization = request.form.get('enable_diarization', 'false').lower() == 'true'
+    task_service.set_task_option(task_id, 'include_diarization', enable_diarization)
+
     # Salvar arquivo com task_id no nome para unicidade e rastreamento
     # A pasta UPLOAD_FOLDER já é verificada/criada no início do app.py
     filename = f"{task_id}_{secure_filename(original_filename)}"
@@ -190,12 +204,31 @@ def retry_insights_generation_route(task_id):
         logger.warning(f"Task {task_id}: Tentativa de gerar insights sem selecionar modelo Ollama.") # Adicionado
         return jsonify({"success": False, "message": "Nenhum modelo Ollama foi selecionado."}), 400
 
+    # Escolher melhor fonte de texto para insights: diarização > timestamps > texto simples
     transcribed_text = task_info['text']
+    text_source = "texto simples"
+
+    # Verificar se há dados de transcrição completos disponíveis
+    transcription_data = task_info.get('transcription_data', {})
+
+    # Priorizar texto com diarização (mais contexto)
+    if transcription_data.get('speakers_text'):
+        transcribed_text = transcription_data['speakers_text']
+        text_source = "transcrição com identificação de locutores"
+        logger.info(f"Task {task_id}: Usando texto com diarização para insights (melhor contexto)")
+    # Segunda opção: texto com timestamps
+    elif transcription_data.get('timestamped_text'):
+        transcribed_text = transcription_data['timestamped_text']
+        text_source = "transcrição com timestamps"
+        logger.info(f"Task {task_id}: Usando texto com timestamps para insights")
+    # Fallback: texto simples (já definido acima)
+    else:
+        logger.info(f"Task {task_id}: Usando texto simples para insights")
 
     task_service.update_task_status(
         task_id,
         status="generating_insights",
-        progress=f"Gerando insights com o modelo {selected_model}...",
+        progress=f"Gerando insights com o modelo {selected_model} baseado em {text_source}...",
         current_prompt=custom_prompt,
         selected_model=selected_model,
         insights=None # Limpa insights anteriores enquanto gera novos
@@ -238,6 +271,70 @@ def retry_insights_generation_route(task_id):
             "current_prompt": custom_prompt,
             "selected_model": selected_model
         })
+
+@app.route('/toggle_diarization/<task_id>', methods=['POST'])
+def toggle_diarization_route(task_id):
+    """
+    Ativa ou desativa a diarização para uma tarefa específica.
+    """
+    data = request.get_json()
+    if not data:
+        return jsonify({"success": False, "message": "Dados não enviados."}), 400
+
+    enable_diarization = data.get('enable_diarization', False)
+
+    # Salvar opção da tarefa
+    task_service.set_task_option(task_id, 'include_diarization', enable_diarization)
+
+    return jsonify({
+        "success": True,
+        "message": f"Diarização {'ativada' if enable_diarization else 'desativada'} para esta tarefa."
+    })
+
+@app.route('/get_transcription_formats/<task_id>')
+def get_transcription_formats_route(task_id):
+    """
+    Retorna diferentes formatos da transcrição (simples, com timestamps, com diarização).
+    """
+    task_info = task_service.get_task_status(task_id)
+
+    if not task_info or 'transcription_data' not in task_info:
+        return jsonify({"success": False, "message": "Dados de transcrição não encontrados."}), 404
+
+    transcription_data = task_info['transcription_data']
+
+    formats = {
+        'simple_text': transcription_data.get('text', ''),
+        'with_timestamps': transcription_data.get('formatted_text', ''),
+        'language': transcription_data.get('language', 'pt')
+    }
+
+    # Se há dados de diarização
+    if 'diarization' in transcription_data:
+        formats['with_speakers'] = transcription_data.get('combined_text', '')
+        formats['speakers_only'] = transcription_data.get('diarization_text', '')
+        formats['speakers_summary'] = transcription_data.get('speakers_summary', {})
+        formats['has_diarization'] = True
+    else:
+        formats['has_diarization'] = False
+        if 'diarization_error' in transcription_data:
+            formats['diarization_error'] = transcription_data['diarization_error']
+
+    return jsonify({"success": True, "formats": formats})
+
+@app.route('/check_diarization_availability')
+def check_diarization_availability_route():
+    """
+    Verifica se o serviço de diarização está disponível.
+    """
+    from services.diarization_service import is_diarization_available
+
+    available = is_diarization_available()
+
+    return jsonify({
+        "available": available,
+        "message": "Diarização disponível" if available else "Diarização não disponível - verifique as dependências"
+    })
 
 # Inicialização do modelo Whisper
 logger.info("Tentando carregar o modelo Whisper na inicialização do aplicativo...") # Modificado
