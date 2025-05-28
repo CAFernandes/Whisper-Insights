@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transcritor de Áudio com Whisper - Web</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 40px;
+            width: 100%;
+            max-width: 800px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1rem;
+        }
+
+        .upload-section {
+            border: 3px dashed #667eea;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 30px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .upload-section:hover {
+            border-color: #764ba2;
+            background-color: #f8f9ff;
+        }
+
+        .upload-section.dragover {
+            border-color: #28a745;
+            background-color: #e8f5e8;
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            color: #667eea;
+        }
+
+        .upload-text {
+            font-size: 1.1rem;
+            color: #555;
+            margin-bottom: 20px;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .selected-file {
+            background: #e8f5e8;
+            border: 1px solid #28a745;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+            display: none;
+        }
+
+        .selected-file.show {
+            display: block;
+        }
+
+        .file-name {
+            font-weight: bold;
+            color: #28a745;
+        }
+
+        .status {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .status.show {
+            display: block;
+        }
+
+        .status.loading {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+        }
+
+        .status.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+
+        .result-section {
+            margin-top: 30px;
+            display: none;
+        }
+
+        .result-section.show {
+            display: block;
+        }
+
+        .result-textarea {
+            width: 100%;
+            min-height: 200px;
+            padding: 20px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 1rem;
+            line-height: 1.6;
+            resize: vertical;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .result-actions {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #e1e5e9;
+            border-radius: 3px;
+            margin: 15px 0;
+            overflow: hidden;
+            display: none;
+        }
+
+        .progress-bar.show {
+            display: block;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.3s ease;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .model-status {
+            background: #e3f2fd;
+            border: 1px solid #2196f3;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 1.8rem;
+            }
+
+            .upload-section {
+                padding: 30px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎙️ Transcritor de Áudio</h1>
+            <p>Transcreva áudios usando inteligência artificial Whisper</p>
+        </div>
+
+        <div class="model-status" id="modelStatus">
+            <span>Verificando modelo Whisper...</span>
+        </div>
+
+        <div class="model-status" id="ollamaStatus" style="background: #fff3cd; border-color: #ffeaa7;">
+            <span>Verificando servidor Ollama...</span>
+        </div>
+
+        <div class="upload-section" id="uploadSection">
+            <div class="upload-icon">📁</div>
+            <div class="upload-text">
+                Arraste e solte seu arquivo de áudio aqui<br>
+                ou clique para selecionar
+            </div>
+            <input type="file" id="fileInput" class="file-input" accept=".mp3,.wav,.m4a,.ogg,.flac,.mp4,.avi">
+            <button class="btn" onclick="document.getElementById('fileInput').click()">
+                📂 Selecionar Arquivo
+            </button>
+        </div>
+
+        <div class="selected-file" id="selectedFile">
+            <div>📄 Arquivo selecionado:</div>
+            <div class="file-name" id="fileName"></div>
+            <button class="btn" id="transcribeBtn" onclick="startTranscription()" style="margin-top: 10px;">
+                🎯 Transcrever Áudio
+            </button>
+        </div>
+
+        <div class="status" id="status"></div>
+
+        <div class="progress-bar" id="progressBar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+
+        <div class="result-section" id="resultSection">
+            <h3 style="margin-bottom: 15px; color: #333;">📝 Resultado da Transcrição:</h3>
+            <textarea class="result-textarea" id="resultText" placeholder="O texto transcrito aparecerá aqui..."></textarea>
+            <div class="result-actions">
+                <button class="btn" onclick="copyToClipboard()">📋 Copiar Texto</button>
+                <button class="btn" onclick="downloadText()">💾 Baixar Texto</button>
+                <button class="btn" onclick="startNew()">🔄 Nova Transcrição</button>
+            </div>
+        </div>
+
+        <div class="result-section" id="insightsSection">
+            <h3 style="margin-bottom: 15px; color: #333;">🧠 Insights e Análises (IA):</h3>
+            <div class="result-textarea" id="insightsText" style="white-space: pre-wrap; overflow-y: auto; background: #f8f9fa; border: 2px solid #e9ecef;">
+                Os insights gerados pela IA aparecerão aqui...
+            </div>
+            <div class="result-actions" style="margin-bottom: 10px;">
+                <button class="btn" onclick="copyInsights()">📋 Copiar Insights</button>
+                <button class="btn" onclick="downloadInsights()">💾 Baixar Análise</button>
+            </div>
+            <div id="retryInsightsControls" style="display: none; margin-top: 15px;">
+                <h4 style="margin-bottom: 10px; color: #444;">Configurações para Insights:</h4>
+
+                <div style="margin-bottom: 15px;">
+                    <label for="ollamaModelSelect" style="display: block; margin-bottom: 5px; color: #555;">Selecionar Modelo Ollama:</label>
+                    <select id="ollamaModelSelect" class="result-textarea" style="min-height: auto; height: 40px; padding: 5px 10px; margin-bottom:10px;">
+                        <!-- Opções de modelo serão populadas aqui -->
+                    </select>
+                </div>
+
+                <p style="font-size: 0.9rem; color: #666; margin-bottom: 8px;">
+                    Edite o prompt abaixo. Para incluir a transcrição completa no seu prompt, certifique-se de que <strong>{{text}}</strong> está presente.
+                </p>
+                <textarea class="result-textarea" id="insightsPrompt" style="min-height: 100px; margin-bottom:10px;" placeholder="Edite o prompt para gerar novos insights..."></textarea>
+                <button class="btn" id="generateInsightsBtn" onclick="generateOrRetryInsights()">
+                    💡 Gerar/Regerar Insights
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentTaskId = null;
+        let statusCheckInterval = null;
+        const defaultInsightsPrompt = {{ default_insights_prompt|tojson|safe }};
+
+        // Verificar modelo na inicialização
+        window.onload = function() {
+            checkModel();
+            checkOllama();
+            setupDragAndDrop();
+            setupFileInput();
+        };
+
+        function checkModel() {
+            fetch('http://localhost:5001/check_model')
+                .then(response => response.json())
+                .then(data => {
+                    const modelStatus = document.getElementById('modelStatus');
+                    if (data.success) {
+                        modelStatus.innerHTML = '✅ ' + data.message;
+                        modelStatus.style.background = '#d4edda';
+                        modelStatus.style.borderColor = '#c3e6cb';
+                    } else {
+                        modelStatus.innerHTML = '❌ ' + data.message;
+                        modelStatus.style.background = '#f8d7da';
+                        modelStatus.style.borderColor = '#f5c6cb';
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('modelStatus').innerHTML = '⚠️ Erro ao verificar modelo: ' + error;
+                });
+        }
+
+        function checkOllama() {
+            fetch('http://localhost:5001/check_ollama')
+                .then(response => response.json())
+                .then(data => {
+                    const ollamaStatus = document.getElementById('ollamaStatus');
+                    if (data.connected && data.count > 0) {
+                        ollamaStatus.innerHTML = `🤖 Ollama conectado - ${data.count} modelo(s): ${data.models.join(', ')}`;
+                        ollamaStatus.style.background = '#d4edda';
+                        ollamaStatus.style.borderColor = '#c3e6cb';
+                    } else if (data.connected && data.count === 0) {
+                        ollamaStatus.innerHTML = '⚠️ Ollama conectado mas sem modelos instalados';
+                        ollamaStatus.style.background = '#fff3cd';
+                        ollamaStatus.style.borderColor = '#ffeaa7';
+                    } else {
+                        ollamaStatus.innerHTML = '❌ Ollama não está disponível (insights desabilitados)';
+                        ollamaStatus.style.background = '#f8d7da';
+                        ollamaStatus.style.borderColor = '#f5c6cb';
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('ollamaStatus').innerHTML = '⚠️ Erro ao verificar Ollama: ' + error;
+                });
+        }
+
+        function setupDragAndDrop() {
+            const uploadSection = document.getElementById('uploadSection');
+
+            uploadSection.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadSection.classList.add('dragover');
+            });
+
+            uploadSection.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                uploadSection.classList.remove('dragover');
+            });
+
+            uploadSection.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadSection.classList.remove('dragover');
+
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    handleFileSelection(files[0]);
+                }
+            });
+        }
+
+        function setupFileInput() {
+            document.getElementById('fileInput').addEventListener('change', function(e) {
+                if (e.target.files.length > 0) {
+                    handleFileSelection(e.target.files[0]);
+                }
+            });
+        }
+
+        function handleFileSelection(file) {
+            const allowedTypes = ['audio/mp3', 'audio/wav', 'audio/m4a', 'audio/ogg', 'audio/flac', 'video/mp4', 'video/avi', 'audio/kwf', 'application/octet-stream']; // Adicionado 'audio/kwf' e um genérico
+            const allowedExtensions = ['.mp3', '.wav', '.m4a', '.ogg', '.flac', '.mp4', '.avi', '.kwf'];
+
+            const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
+
+            if (!allowedExtensions.includes(fileExtension)) {
+                showStatus('Formato de arquivo não suportado. Use: mp3, wav, m4a, ogg, flac, mp4, avi, kwf', 'error');
+                return;
+            }
+
+            document.getElementById('fileName').textContent = file.name;
+            document.getElementById('selectedFile').classList.add('show');
+            document.getElementById('fileInput').files = createFileList(file);
+        }
+
+        function createFileList(file) {
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(file);
+            return dataTransfer.files;
+        }
+
+        function startTranscription() {
+            const fileInput = document.getElementById('fileInput');
+            if (!fileInput.files || fileInput.files.length === 0) {
+                showStatus('Por favor, selecione um arquivo primeiro.', 'error');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+
+            showStatus('Enviando arquivo...', 'loading');
+            showProgress(true);
+
+            fetch('http://localhost:5001/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    currentTaskId = data.task_id;
+                    showStatus(data.message, 'loading');
+                    startStatusCheck();
+                } else {
+                    showStatus(data.message, 'error');
+                    showProgress(false);
+                }
+            })
+            .catch(error => {
+                showStatus('Erro no upload: ' + error, 'error');
+                showProgress(false);
+            });
+        }
+
+        function startStatusCheck() {
+            if (statusCheckInterval) {
+                clearInterval(statusCheckInterval);
+            }
+
+            statusCheckInterval = setInterval(() => {
+                if (currentTaskId) {
+                    checkTranscriptionStatus();
+                }
+            }, 2000);
+        }
+
+        function checkTranscriptionStatus() {
+            fetch(`http://localhost:5001/status/${currentTaskId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'processing') {
+                        showStatus(data.progress || 'Processando transcrição...', 'loading');
+                    } else if (data.status === 'transcription_completed') {
+                        showStatus(data.message || 'Transcrição Concluída!', 'success');
+                        document.getElementById('resultText').value = data.text;
+                        document.getElementById('resultSection').classList.add('show');
+
+                        // Prepara para geração de Insights
+                        document.getElementById('insightsSection').classList.add('show'); // Mostra a seção de insights
+                        document.getElementById('insightsText').textContent = 'Pronto para gerar insights. Selecione um modelo e clique em "Gerar Insights".';
+
+                        populateOllamaModels(data.available_ollama_models || []);
+                        fetchAndDisplayPrompt(currentTaskId, data.current_prompt); // Passa o prompt atual da tarefa
+
+                        document.getElementById('retryInsightsControls').style.display = 'block';
+                        document.getElementById('generateInsightsBtn').textContent = '💡 Gerar Insights';
+
+
+                        showProgress(false);
+                        clearInterval(statusCheckInterval); // Para de verificar o status da transcrição
+
+                    } else if (data.status === 'generating_insights') {
+                        showStatus(data.progress || 'Gerando insights...', 'loading');
+                        // Não limpa o intervalo aqui, pois a geração de insights é um novo passo
+
+                    } else if (data.status === 'completed_with_insights') {
+                        showStatus(data.message || 'Insights gerados com sucesso!', 'success');
+                        document.getElementById('insightsText').textContent = data.insights;
+                        fetchAndDisplayPrompt(currentTaskId, data.current_prompt, data.selected_model); // Passa prompt e modelo usado
+                        document.getElementById('generateInsightsBtn').textContent = '🔁 Regerar Insights';
+
+                        showProgress(false);
+                        clearInterval(statusCheckInterval);
+
+                    } else if (data.status === 'error_insights') {
+                        showStatus(data.message || 'Erro ao gerar insights.', 'error');
+                        document.getElementById('insightsText').textContent = data.message || 'Falha ao gerar insights.';
+                        fetchAndDisplayPrompt(currentTaskId, data.current_prompt, data.selected_model);
+                        document.getElementById('generateInsightsBtn').textContent = '🔁 Tentar Novamente Insights';
+
+                        showProgress(false);
+                        clearInterval(statusCheckInterval);
+
+                    } else if (data.status === 'error') {
+                        showStatus(data.message, 'error');
+                        showProgress(false);
+                        clearInterval(statusCheckInterval);
+                    } else if (data.status === 'not_found') {
+                        showStatus('Tarefa não encontrada.', 'error');
+                        showProgress(false);
+                        clearInterval(statusCheckInterval);
+                    }
+                })
+                .catch(error => {
+                    showStatus('Erro ao verificar status: ' + error, 'error');
+                    showProgress(false);
+                    clearInterval(statusCheckInterval);
+                });
+        }
+
+        function populateOllamaModels(models) {
+            const selectElement = document.getElementById('ollamaModelSelect');
+            selectElement.innerHTML = ''; // Limpa opções existentes
+            if (models && models.length > 0) {
+                models.forEach(modelName => {
+                    const option = document.createElement('option');
+                    option.value = modelName;
+                    option.textContent = modelName;
+                    selectElement.appendChild(option);
+                });
+            } else {
+                const option = document.createElement('option');
+                option.value = "";
+                option.textContent = "Nenhum modelo Ollama disponível";
+                selectElement.appendChild(option);
+                selectElement.disabled = true;
+                document.getElementById('generateInsightsBtn').disabled = true;
+            }
+        }
+
+        function fetchAndDisplayPrompt(taskId, promptFromServer, selectedModel) {
+            const promptTextarea = document.getElementById('insightsPrompt');
+            if (promptFromServer) {
+                promptTextarea.value = promptFromServer;
+            } else {
+                // Usa o defaultInsightsPrompt injetado pelo Flask se nenhum prompt específico da tarefa for encontrado
+                promptTextarea.value = defaultInsightsPrompt !== "{{DEFAULT_INSIGHTS_PROMPT_PLACEHOLDER}}" ? defaultInsightsPrompt : "Gere insights sobre o seguinte texto: {{text}}";
+            }
+
+            if (selectedModel) {
+                const modelSelect = document.getElementById('ollamaModelSelect');
+                modelSelect.value = selectedModel;
+            }
+            document.getElementById('retryInsightsControls').style.display = 'block';
+        }
+
+        function generateOrRetryInsights() { // Renomeada de retryInsightsGeneration
+            if (!currentTaskId) {
+                showStatus('Nenhuma tarefa ativa para gerar insights.', 'error');
+                return;
+            }
+
+            const customPrompt = document.getElementById('insightsPrompt').value;
+            if (!customPrompt.trim()) {
+                showStatus('O prompt para insights não pode estar vazio.', 'error');
+                return;
+            }
+
+            const selectedModel = document.getElementById('ollamaModelSelect').value;
+            if (!selectedModel) {
+                showStatus('Por favor, selecione um modelo Ollama.', 'error');
+                return;
+            }
+
+            showStatus('Solicitando insights...', 'loading');
+            document.getElementById('insightsText').textContent = 'Gerando insights com o modelo ' + selectedModel + '...';
+            document.getElementById('generateInsightsBtn').disabled = true;
+
+
+            fetch(`http://localhost:5001/retry_insights/${currentTaskId}`, // Endpoint pode ser renomeado no backend para /generate_insights
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        prompt: customPrompt,
+                        model_name: selectedModel // Envia o modelo selecionado
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('generateInsightsBtn').disabled = false;
+                    if (data.success) {
+                        showStatus(data.message || 'Insights gerados com sucesso!', 'success');
+                        document.getElementById('insightsText').textContent = data.insights;
+                        if(data.current_prompt) {
+                            document.getElementById('insightsPrompt').value = data.current_prompt;
+                        }
+                        if(data.selected_model){
+                            document.getElementById('ollamaModelSelect').value = data.selected_model;
+                        }
+                        document.getElementById('generateInsightsBtn').textContent = '🔁 Regerar Insights';
+                    } else {
+                        showStatus(data.message || 'Erro ao gerar insights.', 'error');
+                        document.getElementById('insightsText').textContent = data.message || 'Falha ao gerar insights.';
+                        document.getElementById('generateInsightsBtn').textContent = '🔁 Tentar Novamente Insights';
+                    }
+                     // Inicia a verificação de status novamente se a geração de insights for um processo demorado
+                    // No entanto, a rota /retry_insights atualmente é síncrona e retorna o resultado final.
+                    // Se fosse assíncrona, precisaríamos de startStatusCheck() aqui.
+                    // Por ora, o status é atualizado diretamente pela resposta do fetch.
+                })
+                .catch(error => {
+                    document.getElementById('generateInsightsBtn').disabled = false;
+                    showStatus('Erro na requisição para gerar insights: ' + error, 'error');
+                    document.getElementById('insightsText').textContent = 'Erro na comunicação com o servidor.';
+                    document.getElementById('generateInsightsBtn').textContent = '🔁 Tentar Novamente Insights';
+                });
+        }
+
+        function showStatus(message, type) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = 'status show ' + type;
+        }
+
+        function showProgress(show) {
+            const progressBar = document.getElementById('progressBar');
+            if (show) {
+                progressBar.classList.add('show');
+            } else {
+                progressBar.classList.remove('show');
+            }
+        }
+
+        function copyToClipboard() {
+            const resultText = document.getElementById('resultText');
+            resultText.select();
+            document.execCommand('copy');
+            showStatus('Texto copiado para a área de transferência!', 'success');
+        }
+
+        function downloadText() {
+            const text = document.getElementById('resultText').value;
+            const blob = new Blob([text], { type: 'text/plain' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'transcricao_' + new Date().toISOString().slice(0, 10) + '.txt';
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+            showStatus('Arquivo baixado!', 'success');
+        }
+
+        function copyInsights() {
+            const insightsText = document.getElementById('insightsText').textContent;
+            if (insightsText && insightsText !== 'Os insights gerados pela IA aparecerão aqui...') {
+                navigator.clipboard.writeText(insightsText).then(() => {
+                    showStatus('Insights copiados para a área de transferência!', 'success');
+                }).catch(() => {
+                    // Fallback para navegadores mais antigos
+                    const textArea = document.createElement('textarea');
+                    textArea.value = insightsText;
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                    showStatus('Insights copiados para a área de transferência!', 'success');
+                });
+            } else {
+                showStatus('Nenhum insight disponível para copiar.', 'error');
+            }
+        }
+
+        function downloadInsights() {
+            const insightsText = document.getElementById('insightsText').textContent;
+            if (insightsText && insightsText !== 'Os insights gerados pela IA aparecerão aqui...') {
+                const blob = new Blob([insightsText], { type: 'text/plain; charset=utf-8' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'insights_analise_' + new Date().toISOString().slice(0, 10) + '.txt';
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                showStatus('Análise de insights baixada!', 'success');
+            } else {
+                showStatus('Nenhum insight disponível para baixar.', 'error');
+            }
+        }
+
+        function startNew() {
+            currentTaskId = null;
+            if (statusCheckInterval) {
+                clearInterval(statusCheckInterval);
+            }
+            document.getElementById('fileInput').value = null;
+            document.getElementById('selectedFile').classList.remove('show');
+            document.getElementById('status').classList.remove('show');
+            document.getElementById('progressBar').classList.remove('show');
+            document.getElementById('progressFill').style.width = '0%';
+            document.getElementById('resultSection').classList.remove('show');
+            document.getElementById('resultText').value = '';
+            document.getElementById('insightsSection').classList.remove('show');
+            document.getElementById('insightsText').textContent = 'Os insights gerados pela IA aparecerão aqui...';
+
+            const promptTextarea = document.getElementById('insightsPrompt');
+            promptTextarea.value = defaultInsightsPrompt !== "{{DEFAULT_INSIGHTS_PROMPT_PLACEHOLDER}}" ? defaultInsightsPrompt : "Gere insights sobre o seguinte texto: {{text}}";
+
+            const modelSelect = document.getElementById('ollamaModelSelect');
+            if (modelSelect.options.length > 0) {
+                 modelSelect.selectedIndex = 0; // Reseta para o primeiro modelo
+            }
+            modelSelect.disabled = false;
+
+
+            document.getElementById('retryInsightsControls').style.display = 'none';
+            document.getElementById('generateInsightsBtn').disabled = false;
+            document.getElementById('generateInsightsBtn').textContent = '💡 Gerar Insights';
+
+            showStatus('', ''); // Limpa a barra de status
+        }
+    </script>
+</body>
+</html>
