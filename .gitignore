@@ -116,7 +116,7 @@ venv.bak/
 
 # Transcribe Audio App specific
 transcribe/
-uploads/
+uploads/*
 
 # IDE / Editor specific
 .vscode/
@@ -134,3 +134,6 @@ Thumbs.db
 *.kwf
 *.txt
 *.m4a
+
+# Environment variables
+*.env

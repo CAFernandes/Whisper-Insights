@@ -22,6 +22,7 @@ O sistema de transcrição de áudio foi **completamente convertido** de uma apl
 - ✅ Integração completa com servidor Ollama via Docker
 - ✅ Modelo Llama 3.2:3b instalado e funcionando
 - ✅ Geração automática de insights estruturados
+- ✅ **🆕 Uso inteligente de diarização**: Sistema prioriza texto com locutores para melhor contexto
 - ✅ Análise detalhada incluindo:
   - Resumo executivo
   - Temas principais

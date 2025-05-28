@@ -17,7 +17,7 @@ import os
 FLASK_URL = "http://localhost:5001"
 TEST_FILES = {
     "valid_audio": [
-        ("Evoy Call 1.m4a", "audio/m4a"),
+        ("teste_audio.m4a", "audio/m4a"),
         ("teste_audio.wav", "audio/wav"),
         ("teste_audio.ogg", "audio/ogg"),
         ("teste_audio.kwf", "audio/kwf")

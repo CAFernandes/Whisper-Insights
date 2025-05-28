@@ -220,6 +220,94 @@
             text-align: center;
         }
 
+        /* Estilos para a seção de configurações */
+        #configSection {
+            display: none;
+            margin-bottom: 20px;
+        }
+
+        #configSection h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        #diarizationToggle {
+            margin-left: 10px;
+        }
+
+        #diarizationStatus {
+            font-size: 0.85rem;
+            color: #666;
+            margin-top: 10px;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 40px;
+            height: 20px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 12px;
+            width: 12px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            border-radius: 50%;
+            transition: .4s;
+        }
+
+        input:checked + .slider {
+            background-color: #2196f3;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(14px);
+        }
+
+        /* Estilos para tabs de transcrição */
+        .tab-btn {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            padding: 8px 16px;
+            margin-right: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .tab-btn:hover {
+            background: #e9ecef;
+        }
+
+        .tab-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
         @media (max-width: 600px) {
             .container {
                 padding: 20px;
@@ -265,7 +353,42 @@
         <div class="selected-file" id="selectedFile">
             <div>📄 Arquivo selecionado:</div>
             <div class="file-name" id="fileName"></div>
-            <button class="btn" id="transcribeBtn" onclick="startTranscription()" style="margin-top: 10px;">
+
+            <!-- Seção de Configurações Avançadas -->
+            <div id="configSection" style="margin-top: 15px; padding: 15px; background: #f8f9ff; border: 2px solid #e3e7ff; border-radius: 10px;">
+                <h4 style="color: #333; margin-bottom: 10px;">⚙️ Configurações Avançadas</h4>
+
+                <!-- Controle de Diarização -->
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+                    <div>
+                        <strong style="color: #333;">🎤 Identificação de Locutores</strong>
+                        <p style="color: #666; font-size: 0.85rem; margin: 5px 0 0 0;">Identifica quem está falando em cada momento</p>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="diarizationToggle">
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+                <div id="diarizationStatus" style="font-size: 0.8rem; color: #666; margin-bottom: 10px;">
+                    Verificando disponibilidade...
+                </div>
+
+                <!-- Mensagem de ajuda quando diarização não disponível -->
+                <div id="diarizationHelp" style="display: none; background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 6px; padding: 10px; margin-top: 8px; font-size: 0.85rem;">
+                    <div style="color: #856404; margin-bottom: 8px;">
+                        <strong>💡 Quer identificar locutores?</strong>
+                    </div>
+                    <div style="color: #666; line-height: 1.4;">
+                        Configure um token gratuito do Hugging Face para habilitar esta funcionalidade.
+                        <br>
+                        <a href="#" onclick="showQuickGuide()" style="color: #667eea; text-decoration: none; font-weight: bold;">
+                            📖 Guia rápido (5 minutos)
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn" id="transcribeBtn" onclick="startTranscription()" style="margin-top: 15px;">
                 🎯 Transcrever Áudio
             </button>
         </div>
@@ -278,7 +401,28 @@
 
         <div class="result-section" id="resultSection">
             <h3 style="margin-bottom: 15px; color: #333;">📝 Resultado da Transcrição:</h3>
+
+            <!-- Tabs para diferentes formatos -->
+            <div id="transcriptionTabs" style="margin-bottom: 15px; display: none;">
+                <button class="tab-btn active" onclick="showTranscriptionFormat('simple')" id="simpleTab">
+                    📄 Texto Simples
+                </button>
+                <button class="tab-btn" onclick="showTranscriptionFormat('timestamps')" id="timestampsTab">
+                    ⏰ Com Timestamps
+                </button>
+                <button class="tab-btn" onclick="showTranscriptionFormat('speakers')" id="speakersTab" style="display: none;">
+                    🎤 Com Locutores
+                </button>
+            </div>
+
             <textarea class="result-textarea" id="resultText" placeholder="O texto transcrito aparecerá aqui..."></textarea>
+
+            <!-- Resumo de Locutores -->
+            <div id="speakersSummary" style="display: none; margin-top: 15px; padding: 15px; background: #f8f9ff; border-radius: 10px;">
+                <h4 style="color: #333; margin-bottom: 10px;">👥 Resumo dos Locutores:</h4>
+                <div id="speakersInfo"></div>
+            </div>
+
             <div class="result-actions">
                 <button class="btn" onclick="copyToClipboard()">📋 Copiar Texto</button>
                 <button class="btn" onclick="downloadText()">💾 Baixar Texto</button>
@@ -314,6 +458,28 @@
                 </button>
             </div>
         </div>
+
+        <!-- Seção de Configurações -->
+        <div id="configSection" style="display: none; margin-bottom: 20px;">
+            <h3 style="margin-bottom: 15px; color: #333;">⚙️ Configurações Avançadas:</h3>
+
+            <!-- Controle de Diarização -->
+            <div style="background: #f8f9ff; border: 2px solid #e3e7ff; border-radius: 10px; padding: 20px; margin-bottom: 15px;">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+                    <div>
+                        <h4 style="color: #333; margin-bottom: 5px;">🎤 Identificação de Locutores</h4>
+                        <p style="color: #666; font-size: 0.9rem; margin: 0;">Identifica quem está falando em cada momento da gravação</p>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="diarizationToggle">
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+                <div id="diarizationStatus" style="font-size: 0.85rem; color: #666; margin-top: 10px;">
+                    Verificando disponibilidade...
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -325,6 +491,7 @@
         window.onload = function() {
             checkModel();
             checkOllama();
+            checkDiarizationAvailability();
             setupDragAndDrop();
             setupFileInput();
         };
@@ -370,6 +537,34 @@
                 })
                 .catch(error => {
                     document.getElementById('ollamaStatus').innerHTML = '⚠️ Erro ao verificar Ollama: ' + error;
+                });
+        }
+
+        function checkDiarizationAvailability() {
+            fetch('http://localhost:5001/check_diarization_availability')
+                .then(response => response.json())
+                .then(data => {
+                    const diarizationStatus = document.getElementById('diarizationStatus');
+                    const diarizationToggle = document.getElementById('diarizationToggle');
+                    const diarizationHelp = document.getElementById('diarizationHelp');
+
+                    if (data.available) {
+                        diarizationStatus.innerHTML = '✅ Disponível';
+                        diarizationStatus.style.color = '#28a745';
+                        diarizationToggle.disabled = false;
+                        diarizationHelp.style.display = 'none';
+                    } else {
+                        diarizationStatus.innerHTML = '❌ Indisponível - configure token Hugging Face';
+                        diarizationStatus.style.color = '#dc3545';
+                        diarizationToggle.disabled = true;
+                        diarizationToggle.checked = false;
+                        diarizationHelp.style.display = 'block';
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('diarizationStatus').innerHTML = '⚠️ Erro ao verificar: ' + error;
+                    document.getElementById('diarizationToggle').disabled = true;
+                    document.getElementById('diarizationHelp').style.display = 'block';
                 });
         }
 
@@ -437,6 +632,10 @@
             const formData = new FormData();
             formData.append('file', fileInput.files[0]);
 
+            // Adiciona opção de diarização
+            const diarizationEnabled = document.getElementById('diarizationToggle').checked;
+            formData.append('enable_diarization', diarizationEnabled);
+
             showStatus('Enviando arquivo...', 'loading');
             showProgress(true);
 
@@ -481,7 +680,10 @@
                         showStatus(data.progress || 'Processando transcrição...', 'loading');
                     } else if (data.status === 'transcription_completed') {
                         showStatus(data.message || 'Transcrição Concluída!', 'success');
-                        document.getElementById('resultText').value = data.text;
+
+                        // Atualiza o resultado da transcrição
+                        displayTranscriptionResult(data);
+
                         document.getElementById('resultSection').classList.add('show');
 
                         // Prepara para geração de Insights
@@ -493,7 +695,6 @@
 
                         document.getElementById('retryInsightsControls').style.display = 'block';
                         document.getElementById('generateInsightsBtn').textContent = '💡 Gerar Insights';
-
 
                         showProgress(false);
                         clearInterval(statusCheckInterval); // Para de verificar o status da transcrição
@@ -638,6 +839,86 @@
                 });
         }
 
+        function displayTranscriptionResult(data) {
+            // Armazena os dados da transcrição globalmente
+            window.transcriptionData = data;
+
+            // Define o texto simples como padrão
+            document.getElementById('resultText').value = data.text;
+
+            // Mostra as tabs se houver formatos alternativos
+            const hasTimestamps = data.timestamped_text && data.timestamped_text !== data.text;
+            const hasSpeakers = data.speakers_text && data.speakers_summary;
+
+            if (hasTimestamps || hasSpeakers) {
+                document.getElementById('transcriptionTabs').style.display = 'block';
+
+                // Mostra tab de timestamps se disponível
+                if (hasTimestamps) {
+                    document.getElementById('timestampsTab').style.display = 'inline-block';
+                }
+
+                // Mostra tab de locutores se disponível
+                if (hasSpeakers) {
+                    document.getElementById('speakersTab').style.display = 'inline-block';
+                    displaySpeakersSummary(data.speakers_summary);
+                }
+            }
+        }
+
+        function showTranscriptionFormat(format) {
+            const data = window.transcriptionData;
+            if (!data) return;
+
+            // Atualiza tabs visuais
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(format + 'Tab').classList.add('active');
+
+            // Atualiza o conteúdo
+            const resultText = document.getElementById('resultText');
+            const speakersSummary = document.getElementById('speakersSummary');
+
+            switch(format) {
+                case 'simple':
+                    resultText.value = data.text;
+                    speakersSummary.style.display = 'none';
+                    break;
+                case 'timestamps':
+                    resultText.value = data.timestamped_text || data.text;
+                    speakersSummary.style.display = 'none';
+                    break;
+                case 'speakers':
+                    resultText.value = data.speakers_text || data.text;
+                    speakersSummary.style.display = data.speakers_summary ? 'block' : 'none';
+                    break;
+            }
+        }
+
+        function displaySpeakersSummary(summary) {
+            const speakersInfo = document.getElementById('speakersInfo');
+            if (!summary || !summary.speakers) {
+                speakersInfo.innerHTML = 'Nenhum resumo de locutores disponível.';
+                return;
+            }
+
+            let html = '<div style="display: grid; gap: 10px;">';
+            summary.speakers.forEach(speaker => {
+                const duration = Math.round(speaker.total_duration);
+                const percentage = Math.round(speaker.percentage);
+                html += `
+                    <div style="padding: 10px; background: white; border-radius: 8px; border-left: 4px solid #667eea;">
+                        <strong style="color: #333;">${speaker.label}</strong>
+                        <div style="color: #666; font-size: 0.9rem;">
+                            Tempo de fala: ${duration}s (${percentage}%)
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+
+            speakersInfo.innerHTML = html;
+        }
+
         function showStatus(message, type) {
             const status = document.getElementById('status');
             status.textContent = message;
@@ -727,6 +1008,21 @@
             document.getElementById('insightsSection').classList.remove('show');
             document.getElementById('insightsText').textContent = 'Os insights gerados pela IA aparecerão aqui...';
 
+            // Limpa dados de transcrição
+            window.transcriptionData = null;
+
+            // Reseta tabs de transcrição
+            document.getElementById('transcriptionTabs').style.display = 'none';
+            document.getElementById('timestampsTab').style.display = 'none';
+            document.getElementById('speakersTab').style.display = 'none';
+            document.getElementById('speakersSummary').style.display = 'none';
+            document.getElementById('simpleTab').classList.add('active');
+            document.getElementById('timestampsTab').classList.remove('active');
+            document.getElementById('speakersTab').classList.remove('active');
+
+            // Reseta toggle de diarização
+            document.getElementById('diarizationToggle').checked = false;
+
             const promptTextarea = document.getElementById('insightsPrompt');
             promptTextarea.value = defaultInsightsPrompt !== "{{DEFAULT_INSIGHTS_PROMPT_PLACEHOLDER}}" ? defaultInsightsPrompt : "Gere insights sobre o seguinte texto: {{text}}";
 
@@ -736,13 +1032,125 @@
             }
             modelSelect.disabled = false;
 
-
             document.getElementById('retryInsightsControls').style.display = 'none';
             document.getElementById('generateInsightsBtn').disabled = false;
             document.getElementById('generateInsightsBtn').textContent = '💡 Gerar Insights';
 
             showStatus('', ''); // Limpa a barra de status
         }
+
+        function showQuickGuide() {
+            const guideContent = `
+                <div style="max-height: 70vh; overflow-y: auto; padding: 20px; line-height: 1.6;">
+                    <h2 style="color: #667eea; margin-bottom: 20px;">⚡ Configurar Diarização em 5 Minutos</h2>
+
+                    <div style="background: #e8f5e8; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                        <strong>🎯 O que é isso?</strong><br>
+                        Permite identificar <strong>quem está falando</strong> em gravações com múltiplas pessoas.
+
+                        <div style="background: #f8f9fa; margin: 10px 0; padding: 10px; border-radius: 5px; font-family: monospace; font-size: 0.9em;">
+                            [00:00 - 00:03] SPEAKER_00: Olá, como você está?<br>
+                            [00:04 - 00:07] SPEAKER_01: Estou bem, obrigado!
+                        </div>
+                    </div>
+
+                    <h3 style="color: #333; margin: 20px 0 10px 0;">🚀 Configuração (4 passos):</h3>
+
+                    <div style="margin-bottom: 15px;">
+                        <strong>1️⃣ Criar conta Hugging Face</strong><br>
+                        <a href="https://huggingface.co/join" target="_blank" style="color: #667eea;">https://huggingface.co/join</a>
+                    </div>
+
+                    <div style="margin-bottom: 15px;">
+                        <strong>2️⃣ Aceitar termos dos modelos</strong><br>
+                        <a href="https://hf.co/pyannote/speaker-diarization-3.1" target="_blank" style="color: #667eea;">Modelo 1</a> → "Agree and access repository"<br>
+                        <a href="https://hf.co/pyannote/segmentation-3.0" target="_blank" style="color: #667eea;">Modelo 2</a> → "Agree and access repository"
+                    </div>
+
+                    <div style="margin-bottom: 15px;">
+                        <strong>3️⃣ Criar token</strong><br>
+                        <a href="https://hf.co/settings/tokens" target="_blank" style="color: #667eea;">https://hf.co/settings/tokens</a> → "New token" → Tipo: "Read" → Copiar token
+                    </div>
+
+                    <div style="margin-bottom: 20px;">
+                        <strong>4️⃣ Configurar token (escolha uma opção):</strong><br>
+
+                        <div style="background: #fff3cd; padding: 10px; border-radius: 5px; margin: 10px 0;">
+                            <strong>🏆 MAIS FÁCIL - Login via CLI:</strong><br>
+                            <code style="background: #f8f9fa; padding: 5px; border-radius: 3px;">
+                                pip install huggingface_hub<br>
+                                huggingface-cli login
+                            </code>
+                        </div>
+
+                        <div style="background: #e3e7ff; padding: 10px; border-radius: 5px; margin: 10px 0;">
+                            <strong>OU - Variável de ambiente:</strong><br>
+                            <code style="background: #f8f9fa; padding: 5px; border-radius: 3px;">
+                                export HUGGINGFACE_HUB_TOKEN="hf_xxxxxxxxx"
+                            </code>
+                        </div>
+
+                        <div style="background: #f0f8ff; padding: 10px; border-radius: 5px; margin: 10px 0;">
+                            <strong>OU - Arquivo .env:</strong><br>
+                            <code style="background: #f8f9fa; padding: 5px; border-radius: 3px;">
+                                echo 'HUGGINGFACE_HUB_TOKEN=hf_xxxxxxxxx' > .env
+                            </code>
+                        </div>
+                    </div>
+
+                    <div style="background: #d4edda; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                        <strong>✅ Após configurar:</strong><br>
+                        1. Reinicie a aplicação<br>
+                        2. Recarregue esta página<br>
+                        3. O toggle ficará habilitado automaticamente
+                    </div>
+
+                    <div style="background: #f8d7da; padding: 15px; border-radius: 8px;">
+                        <strong>💡 Dica:</strong> É gratuito! Os modelos são open-source e você só precisa se registrar para estatísticas de uso.
+                    </div>
+                </div>
+            `;
+
+            // Criar modal
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                background: rgba(0,0,0,0.7); display: flex; justify-content: center;
+                align-items: center; z-index: 1000;
+            `;
+
+            const modalContent = document.createElement('div');
+            modalContent.style.cssText = `
+                background: white; border-radius: 15px; max-width: 800px;
+                width: 90%; max-height: 90%; position: relative;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            `;
+
+            const closeBtn = document.createElement('button');
+            closeBtn.innerHTML = '✕';
+            closeBtn.style.cssText = `
+                position: absolute; top: 15px; right: 20px; background: none;
+                border: none; font-size: 24px; cursor: pointer; color: #999;
+                width: 30px; height: 30px; border-radius: 50%;
+                display: flex; align-items: center; justify-content: center;
+            `;
+            closeBtn.onmouseover = () => closeBtn.style.background = '#f0f0f0';
+            closeBtn.onmouseout = () => closeBtn.style.background = 'none';
+            closeBtn.onclick = () => document.body.removeChild(modal);
+
+            modalContent.innerHTML = guideContent;
+            modalContent.appendChild(closeBtn);
+            modal.appendChild(modalContent);
+
+            // Fechar modal clicando fora
+            modal.onclick = (e) => {
+                if (e.target === modal) document.body.removeChild(modal);
+            };
+
+            document.body.appendChild(modal);
+        }
+
+        // ...existing code...
     </script>
 </body>
 </html>
