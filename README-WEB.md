@@ -108,20 +108,102 @@ sudo apt install ffmpeg
 app.run(debug=True, host='0.0.0.0', port=5001)  # Mude 5000 para 5001
 ```
 
-## 🆚 Comparação: Desktop vs Web
+---
 
-| Recurso | Desktop (tkinter) | Web (Flask) |
-|---------|------------------|-------------|
-| **Interface** | Aplicação nativa | Navegador |
-| **Responsividade** | Fixa | Adaptável |
-| **Acesso remoto** | ❌ Não | ✅ Sim |
-| **Drag & Drop** | ✅ Sim | ✅ Sim |
-| **Mobile** | ❌ Não | ✅ Sim |
-| **Instalação** | Complexa | Simples |
+# 🚀 Sobre o Projeto
 
-## 📝 Notas
+Este projeto converteu uma aplicação desktop de transcrição de áudio (tkinter) em uma **aplicação web moderna** baseada em Flask, com integração de IA para geração de insights usando Whisper (OpenAI) e Ollama (Llama 3.2:3b).
 
-- O modelo Whisper é carregado na memória durante a execução
-- Primeira execução pode demorar (download do modelo)
-- Processamento de áudios longos pode levar vários minutos
-- Recomendado usar em máquinas com pelo menos 4GB RAM
+## 🛠️ Funcionalidades Principais
+
+- **Transcrição automática de áudio** com Whisper AI
+- **Geração de insights** com Ollama (Llama 3.2:3b via Docker)
+- **Interface web responsiva** (HTML5, CSS3, JS)
+- **Upload drag & drop** e seleção de arquivos
+- **Status em tempo real** do processamento
+- **Retry de insights** com prompt customizável e seleção de modelo
+- **Limpeza automática** de arquivos temporários
+- **Validação robusta** de arquivos e segurança
+- **Testes automatizados** (unitários e integração)
+
+## 🧠 Exemplo de Insights Gerados
+
+```
+**RESUMO EXECUTIVO**
+O áudio contém uma conversa entre duas pessoas, identificadas como David e um confino, que discutem sobre um negócio a ser resolvido...
+
+**TEMAS PRINCIPAIS**
+1. Negócios e Problemas
+2. Vídeo e Tecnologia
+3. Comunicação e Coordenação
+
+**OBJETIVOS IDENTIFICADOS**
+* Conhecer o conceito de vídeo "Conor Héctor"
+* Resolver o problema com o grupo de integradores
+* Comunicar-se de forma eficaz sobre os objetivos...
+
+**CLASSIFICAÇÃO**
+* Tipo de conteúdo: Conversa informal
+* Tom geral: Urgente e desesperado
+```
+
+## 🏗️ Arquitetura
+
+### Backend (Flask)
+- Flask 3.1.1
+- OpenAI Whisper (transcrição)
+- Requests (Ollama)
+- Threading para processamento assíncrono
+- API RESTful
+
+### Frontend
+- HTML5, CSS3, JavaScript ES6
+- Drag & drop, status real-time, responsividade
+
+### IA e Processamento
+- Ollama (Docker) + Llama 3.2:3b
+- PyTorch (Whisper)
+- Timeout e tratamento de erros robusto
+
+## 📊 Testes Automatizados
+
+- **test_complete_workflow.py**: Testa upload, transcrição, insights, erros e retry
+- **test_units.py**: Testes unitários para utilitários, serviços e validações
+- **Cobertura**: Upload, transcrição, insights, erros, retry, múltiplos formatos
+
+## 📁 Estrutura Recomendada
+
+```
+transcribe_audio/
+├── app.py                  # Servidor Flask principal
+├── config.py               # Configurações centralizadas
+├── helpers/                # Utilitários (file_utils.py)
+├── services/               # Lógica de negócio (whisper, ollama, task)
+├── templates/index.html    # Interface web
+├── static/                 # Arquivos estáticos
+├── uploads/                # Arquivos temporários
+├── requirements-web.txt    # Dependências
+├── start_web.sh            # Script de inicialização
+├── test_complete_workflow.py # Teste de integração
+├── test_units.py           # Testes unitários
+└── ...
+```
+
+## 🏆 Diferenciais
+
+- Conversão desktop → web com arquitetura profissional
+- IA de ponta (Whisper + Llama)
+- Testes completos e automação
+- Interface moderna e usável
+- Pronto para produção (basta rodar o Flask)
+
+## 💡 Dicas de Produção
+
+- Para produção, use Gunicorn/Nginx
+- Considere integrar banco de dados para histórico
+- Adicione autenticação para multiusuário
+- Monitore logs e uso de recursos
+
+---
+
+Para mais detalhes, veja também o arquivo `PROJETO_CONCLUIDO.md`.

@@ -3,14 +3,27 @@ import os
 import threading
 import time
 from werkzeug.utils import secure_filename
+import logging # Adicionado
+
+# Configuração básica do logging
+logging.basicConfig(level=logging.INFO,
+                    format='%(asctime)s - %(levelname)s - %(message)s',
+                    handlers=[
+                        logging.FileHandler("app.log"), # Salva logs em um arquivo
+                        logging.StreamHandler() # Mostra logs no console
+                    ])
+logger = logging.getLogger(__name__) # Adicionado
 
 # Importações refatoradas
-from config import UPLOAD_FOLDER, MAX_FILE_SIZE, DEFAULT_INSIGHTS_PROMPT, OLLAMA_BASE_URL, WHISPER_MODEL_NAME
-from helpers.file_utils import allowed_file # save_uploaded_file não é mais usado diretamente aqui
+from config import (
+    UPLOAD_FOLDER, MAX_FILE_SIZE, DEFAULT_INSIGHTS_PROMPT,
+    OLLAMA_BASE_URL, WHISPER_MODEL_NAME, ALLOWED_EXTENSIONS, UPLOAD_FILE_MAX_AGE_MINUTES # Adicionado UPLOAD_FILE_MAX_AGE_MINUTES
+)
+from helpers.file_utils import allowed_file, start_cleanup_scheduler # Modificado
 from services import whisper_service, ollama_service, task_service
 
 app = Flask(__name__)
-app.secret_key = 'transcritor_audio_secret_key_2025' # Pode ir para config.py
+app.secret_key = os.getenv('FLASK_SECRET_KEY', 'transcritor_audio_secret_key_2025') # Carrega do .env
 
 # Configurações do App a partir de config.py
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -31,16 +44,19 @@ def process_audio_task(file_path, task_id, original_filename):
         task_service.update_task_status(task_id, status="processing", progress="Transcrevendo áudio...")
         if not os.path.exists(file_path):
             task_service.update_task_status(task_id, status="error", message="Arquivo não encontrado para processamento.")
+            logger.error(f"Task {task_id}: Arquivo {file_path} não encontrado para processamento.") # Adicionado
             return
 
         transcribed_text, error = whisper_service.transcribe_audio(file_path)
 
         if error:
             task_service.update_task_status(task_id, status="error", message=error)
+            logger.error(f"Task {task_id}: Erro na transcrição Whisper: {error}") # Adicionado
             return
 
         if transcribed_text is None:
             task_service.update_task_status(task_id, status="error", message="Transcrição retornou texto vazio.")
+            logger.error(f"Task {task_id}: Transcrição retornou texto vazio para o arquivo {original_filename}.") # Adicionado
             return
 
         # Verificar conexão e modelos Ollama
@@ -56,10 +72,19 @@ def process_audio_task(file_path, task_id, original_filename):
             ollama_connected=ollama_conn
         )
 
+    except FileNotFoundError as fnf_error:
+        error_message = f"Erro: Arquivo não encontrado durante o processamento da tarefa: {fnf_error}"
+        logger.error(f"Task {task_id}: {error_message}")
+        task_service.update_task_status(task_id, status="error", message=error_message)
+    except ConnectionError as conn_error: # Exemplo para erros de conexão (ajustar conforme os serviços)
+        error_message = f"Erro de conexão durante o processamento da tarefa: {conn_error}"
+        logger.error(f"Task {task_id}: {error_message}")
+        task_service.update_task_status(task_id, status="error", message=error_message)
     except Exception as e:
-        error_message = f"Erro durante o processamento da tarefa: {e}"
+        error_message = f"Erro inesperado durante o processamento da tarefa: {e}"
         if "ffmpeg" in str(e).lower():
             error_message += "\\nVerifique se o ffmpeg está instalado no sistema e acessível no PATH."
+        logger.exception(f"Task {task_id}: {error_message}") # Usar logger.exception para incluir o stack trace
         task_service.update_task_status(task_id, status="error", message=error_message)
 
     finally:
@@ -67,9 +92,9 @@ def process_audio_task(file_path, task_id, original_filename):
             if os.path.exists(file_path):
                 time.sleep(2)
                 os.remove(file_path)
-                print(f"Arquivo {file_path} removido com sucesso.")
+                logger.info(f"Task {task_id}: Arquivo {file_path} removido com sucesso.") # Modificado
         except Exception as e:
-            print(f"Aviso: Não foi possível remover o arquivo {file_path}: {e}")
+            logger.warning(f"Task {task_id}: Aviso - Não foi possível remover o arquivo {file_path}: {e}") # Modificado
 
 @app.route('/')
 def index():
@@ -118,7 +143,9 @@ def upload_file_route():
 
     try:
         file.save(file_path)
+        logger.info(f"Task {task_id}: Arquivo {original_filename} salvo como {file_path}.") # Adicionado
     except Exception as e:
+        logger.error(f"Task {task_id}: Erro ao salvar o arquivo {original_filename}: {e}") # Adicionado
         task_service.update_task_status(task_id, status="error", message=f"Erro ao salvar arquivo: {e}")
         return jsonify({"success": False, "message": f"Erro ao salvar o arquivo: {e}"}), 500
 
@@ -144,19 +171,23 @@ def retry_insights_generation_route(task_id):
     task_info = task_service.get_task_status(task_id)
 
     if not task_info or 'text' not in task_info or task_info['text'] is None:
+        logger.warning(f"Task {task_id}: Tentativa de gerar insights sem transcrição.") # Adicionado
         return jsonify({"success": False, "message": "Tarefa ou transcrição não encontrada para gerar insights."}), 404
 
     if task_info.get("status") not in ["transcription_completed", "completed_with_insights", "error_insights"]:
-         return jsonify({"success": False, "message": f"Não é possível gerar insights no estado atual da tarefa: {task_info.get('status')}."}), 400
+        logger.warning(f"Task {task_id}: Tentativa de gerar insights no estado inválido {task_info.get('status')}.") # Adicionado
+        return jsonify({"success": False, "message": f"Não é possível gerar insights no estado atual da tarefa: {task_info.get('status')}."}), 400
 
     data = request.get_json()
     if not data:
+        logger.warning(f"Task {task_id}: Tentativa de gerar insights sem dados no corpo da requisição.") # Adicionado
         return jsonify({"success": False, "message": "Dados não enviados no corpo da requisição."}), 400
 
     custom_prompt = data.get('prompt', DEFAULT_INSIGHTS_PROMPT)
     selected_model = data.get('model_name')
 
     if not selected_model:
+        logger.warning(f"Task {task_id}: Tentativa de gerar insights sem selecionar modelo Ollama.") # Adicionado
         return jsonify({"success": False, "message": "Nenhum modelo Ollama foi selecionado."}), 400
 
     transcribed_text = task_info['text']
@@ -184,6 +215,7 @@ def retry_insights_generation_route(task_id):
             message=f"Erro ao gerar insights: {error_message}"
             # insights já foi limpo ou permanece None
         )
+        logger.error(f"Task {task_id}: Erro ao gerar insights com Ollama: {error_message}") # Adicionado
         return jsonify({
             "success": False,
             "message": f"Erro ao gerar insights: {error_message}",
@@ -198,6 +230,7 @@ def retry_insights_generation_route(task_id):
             insights=insights_text
             # current_prompt e selected_model já foram atualizados antes
         )
+        logger.info(f"Task {task_id}: Insights gerados com sucesso com o modelo {selected_model}.") # Adicionado
         return jsonify({
             "success": True,
             "message": "Insights gerados com sucesso!",
@@ -207,15 +240,23 @@ def retry_insights_generation_route(task_id):
         })
 
 # Inicialização do modelo Whisper
-print("Tentando carregar o modelo Whisper na inicialização do aplicativo...")
+logger.info("Tentando carregar o modelo Whisper na inicialização do aplicativo...") # Modificado
 model_loaded, model_msg = whisper_service.load_whisper_model() # Usa WHISPER_MODEL_NAME de config.py
 if model_loaded:
-    print(f"Servidor Flask: {model_msg}")
+    logger.info(f"Servidor Flask: {model_msg}") # Modificado
 else:
-    print(f"Servidor Flask: AVISO - {model_msg}. O modelo será carregado na primeira requisição, se possível.")
+    logger.warning(f"Servidor Flask: AVISO - {model_msg}. O modelo será carregado na primeira requisição, se possível.") # Modificado
 
 
 if __name__ == '__main__':
     # A chamada para load_whisper_model() já ocorreu globalmente.
     # O Flask development server não é ideal para produção.
-    app.run(debug=True, host='0.0.0.0', port=5001)
+    port = int(os.getenv('FLASK_RUN_PORT', 5001))
+    debug_mode = os.getenv('FLASK_DEBUG', 'True').lower() == 'true'
+
+    # Iniciar o agendador de limpeza de uploads
+    # O intervalo pode ser o mesmo que UPLOAD_FILE_MAX_AGE_MINUTES ou um valor fixo.
+    # Se UPLOAD_FILE_MAX_AGE_MINUTES for 10, ele verificará a cada 10 minutos.
+    start_cleanup_scheduler(interval_minutes=UPLOAD_FILE_MAX_AGE_MINUTES)
+
+    app.run(debug=debug_mode, host='0.0.0.0', port=port)

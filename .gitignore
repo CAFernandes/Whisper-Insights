@@ -127,3 +127,10 @@ uploads/
 # OS generated files
 .DS_Store
 Thumbs.db
+
+# Audio files
+*.ogg
+*.wav
+*.kwf
+*.txt
+*.m4a
