@@ -62,7 +62,7 @@ def test_whisper_model():
 def upload_file(file_path, content_type, enable_diarization=False):
     """Faz upload de um arquivo específico"""
     print(f"\n📤 Fazendo upload do arquivo: {file_path}")
-    
+
     if enable_diarization:
         print("👥 Speaker diarization habilitado")
 
@@ -73,7 +73,7 @@ def upload_file(file_path, content_type, enable_diarization=False):
     try:
         with open(file_path, 'rb') as f:
             files = {'file': (os.path.basename(file_path), f, content_type)}
-            
+
             # Adicionar parâmetro de diarization se habilitado
             data_params = {}
             if enable_diarization:
@@ -172,18 +172,18 @@ def monitor_progress(task_id, wait_for_insights=False):
                     speakers_text = transcription_data['speakers_text']
                     print(speakers_text[:800] + "..." if len(speakers_text) > 800 else speakers_text)
                     print("-" * 50)
-                    
+
                     # Exibir resumo de speakers se disponível
                     speakers_summary = transcription_data.get('speakers_summary', {})
                     if speakers_summary and 'speakers' in speakers_summary:
                         speakers_info = speakers_summary['speakers']
                         total_speakers = speakers_summary.get('total_speakers', 0)
                         total_duration = speakers_summary.get('total_duration', 0)
-                        
+
                         print(f"\n📊 Resumo de Locutores:")
                         print(f"🎤 Total de speakers identificados: {total_speakers}")
                         print(f"⏱️ Duração total: {total_duration:.1f}s")
-                        
+
                         for speaker, info in speakers_info.items():
                             duration = info.get('total_duration', 0)
                             percentage = info.get('percentage', 0)
@@ -331,15 +331,15 @@ def test_speaker_diarization_workflow(file_path, content_type, ollama_models):
     # Verificar se diarization foi aplicado
     transcription_data = result.get('transcription_data', {})
     has_diarization = bool(transcription_data.get('speakers_text'))
-    
+
     if has_diarization:
         print("✅ Speaker diarization aplicado com sucesso!")
-        
+
         # Testar insights com contexto de múltiplos speakers
         if ollama_models:
-            custom_prompt = """Analise esta transcrição que contém múltiplos speakers. 
+            custom_prompt = """Analise esta transcrição que contém múltiplos speakers.
             Forneça um resumo identificando os principais pontos de cada participante e a dinâmica da conversa: {{text}}"""
-            
+
             insights_success = test_retry_insights_with_prompt(task_id, ollama_models, custom_prompt)
             if insights_success:
                 monitor_progress(task_id, wait_for_insights=False)
@@ -450,19 +450,19 @@ def main():
     print("-" * 40)
     diarization_available = test_speaker_diarization_availability()
     test_results["speaker_diarization"] = diarization_available
-    
+
     # Se speaker diarization estiver disponível, testar workflow específico
     if diarization_available:
         print(f"\n📋 FASE 5: Testes de Workflow com Speaker Diarization")
         print("-" * 40)
-        
+
         # Testar com um arquivo de áudio válido
         test_file = None
         for file_path, content_type in TEST_FILES["valid_audio"]:
             if os.path.exists(file_path):
                 test_file = (file_path, content_type)
                 break
-        
+
         if test_file:
             file_path, content_type = test_file
             diarization_success = test_speaker_diarization_workflow(file_path, content_type, ollama_models)
@@ -484,7 +484,7 @@ def main():
     print(f"✅ Teste upload sem arquivo: {'OK' if test_results['no_file_upload'] else 'FALHA'}")
     print(f"✅ Testes de retry insights: {test_results['insights_retry']}")
     print(f"✅ Disponibilidade de Speaker Diarization: {'OK' if test_results['speaker_diarization'] else 'FALHA'}")
-    
+
     if test_results["speaker_diarization"]:
         print(f"✅ Workflow com Speaker Diarization: {'OK' if test_results.get('speaker_diarization_workflow', False) else 'FALHA'}")
 
