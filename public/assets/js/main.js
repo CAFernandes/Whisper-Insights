@@ -562,6 +562,8 @@ function displayTranscriptionResult(data) {
   // Armazena os dados da transcrição globalmente
   window.transcriptionData = data;
 
+  console.log('Dados de transcrição recebidos:', data);
+
   // Exibe o resultado da transcrição
   const transcriptionResult = document.getElementById('transcription-result');
   if (transcriptionResult) {
@@ -569,12 +571,64 @@ function displayTranscriptionResult(data) {
   }
 
   // Verifica se há dados de diarização para mostrar o tab de diálogo
-  const hasSpeakers = data.speakers_text && data.speakers_summary;
-  const dialogueTab = document.getElementById('dialogue-tab');
+  // Verifica múltiplas fontes de dados de diarização
+  const hasSpeakersText = !!data.speakers_text;
+  const hasSpeakersSummary = !!(data.transcription_data && data.transcription_data.speakers_summary);
+  const hasDiarizationData = !!(data.transcription_data && data.transcription_data.diarization);
+  const hasWhisperSegmentsWithSpeakers = data.transcription_data &&
+    data.transcription_data.segments &&
+    data.transcription_data.segments.some(segment => segment.speaker);
+
+  const hasSpeakers = hasSpeakersText || hasSpeakersSummary || hasDiarizationData || hasWhisperSegmentsWithSpeakers;
+  const dialogueTab = document.getElementById('dialogue-tab-btn');
+
+  console.log('🔍 VERIFICAÇÃO DETALHADA DE SPEAKERS:');
+  console.log('  - speakers_text exists:', !!data.speakers_text);
+  console.log('  - transcription_data exists:', !!data.transcription_data);
+  console.log('  - segments exists:', !!(data.transcription_data && data.transcription_data.segments));
+  console.log('  - segments count:', data.transcription_data?.segments?.length || 0);
+  console.log('  - speakers_summary exists:', !!data.transcription_data?.speakers_summary);
+  console.log('  - diarization data exists:', !!data.transcription_data?.diarization);
+
+  if (data.transcription_data?.segments) {
+    const segmentsWithSpeaker = data.transcription_data.segments.filter(s => s.speaker);
+    console.log('  - whisper segments with speaker:', segmentsWithSpeaker.length);
+    console.log('  - first few whisper segments speaker check:',
+      data.transcription_data.segments.slice(0, 3).map(s => ({
+        hasSpeaker: !!s.speaker,
+        speaker: s.speaker
+      }))
+    );
+  }
+
+  if (data.transcription_data?.diarization) {
+    console.log('  - diarization segments count:', data.transcription_data.diarization.length);
+    console.log('  - first few diarization segments:',
+      data.transcription_data.diarization.slice(0, 3).map(s => ({
+        speaker: s.speaker,
+        duration: s.duration
+      }))
+    );
+  }
+
+  console.log('  - hasSpeakersText:', hasSpeakersText);
+  console.log('  - hasSpeakersSummary:', hasSpeakersSummary);
+  console.log('  - hasDiarizationData:', hasDiarizationData);
+  console.log('  - hasWhisperSegmentsWithSpeakers:', hasWhisperSegmentsWithSpeakers);
+  console.log('  - hasSpeakers (final):', hasSpeakers);
+  console.log('  - dialogue tab found:', !!dialogueTab);
 
   if (hasSpeakers && dialogueTab) {
     dialogueTab.style.display = 'inline-block';
     displayDialogueResult(data);
+    console.log('✅ Tab de diálogo habilitado');
+  } else {
+    if (dialogueTab) {
+      dialogueTab.style.display = 'none';
+      console.log('❌ Tab de diálogo OCULTADO - dados insuficientes');
+    } else {
+      console.log('❌ Tab de diálogo não encontrado no DOM');
+    }
   }
 
   // Mostra o botão "Nova Transcrição"
@@ -586,10 +640,15 @@ function displayTranscriptionResult(data) {
 
 function displayDialogueResult(data) {
   const dialogueResult = document.getElementById('dialogue-result');
-  if (!dialogueResult) return;
+  if (!dialogueResult) {
+    console.warn('Elemento dialogue-result não encontrado');
+    return;
+  }
 
-  // Verifica se temos dados de diarização
-  if (!data.speakers_text || !data.transcription_data) {
+  console.log('Exibindo resultado do diálogo com dados:', data);
+
+  // Verifica se temos dados de diarização (relaxa a verificação)
+  if (!data.speakers_text && !data.transcription_data) {
     dialogueResult.innerHTML = '<p>Dados de diarização não disponíveis.</p>';
     return;
   }
@@ -601,6 +660,8 @@ function displayDialogueResult(data) {
     return;
   }
 
+  console.log('Dados de diálogo processados:', dialogueData);
+
   // Renderiza as mensagens do diálogo
   renderDialogueMessages(dialogueResult, dialogueData);
 }
@@ -609,9 +670,60 @@ function parseDialogueData(data) {
   const messages = [];
 
   try {
-    // Tenta extrair dados dos segmentos de diarização se disponível
-    if (data.transcription_data && data.transcription_data.segments) {
-      data.transcription_data.segments.forEach(segment => {
+    console.log('Parsing dialogue data:', {
+      hasTranscriptionData: !!data.transcription_data,
+      hasSpeakersText: !!data.speakers_text,
+      hasCombinedText: !!(data.transcription_data && data.transcription_data.combined_text),
+      hasDiarization: !!(data.transcription_data && data.transcription_data.diarization)
+    });
+
+    // PRIORITÁRIO: Usa combined_text se disponível (formato já processado com speakers e timestamps)
+    if (data.transcription_data && data.transcription_data.combined_text) {
+      console.log('Processando combined_text (formato já processado)');
+      const combinedText = data.transcription_data.combined_text;
+      const lines = combinedText.split('\n');
+
+      lines.forEach((line, index) => {
+        line = line.trim();
+        if (line) {
+          // Formato: [00:00 - 00:07] SPEAKER_01: texto
+          const match = line.match(/^\[(\d{2}:\d{2})\s*-\s*(\d{2}:\d{2})\]\s+(SPEAKER_\d+):\s*(.+)$/);
+          if (match) {
+            const startTime = match[1];
+            const endTime = match[2];
+            const speaker = match[3];
+            const text = match[4].trim();
+
+            if (text) {
+              messages.push({
+                speaker: speaker,
+                text: text,
+                start: timeToSeconds(startTime),
+                end: timeToSeconds(endTime),
+                timestamp: startTime
+              });
+              console.log(`Linha ${index} processada: ${speaker} -> "${text.substring(0, 30)}..."`);
+            }
+          }
+        }
+      });
+    }
+    // FALLBACK 1: Tenta extrair dados dos segmentos de whisper com speakers se disponível
+    else if (data.transcription_data && data.transcription_data.segments) {
+      console.log('Processando segmentos de transcrição:', data.transcription_data.segments.length);
+
+      // Debug: vamos ver alguns segmentos de exemplo
+      console.log('Primeiros 3 segmentos:', data.transcription_data.segments.slice(0, 3));
+
+      data.transcription_data.segments.forEach((segment, index) => {
+        console.log(`Segmento ${index}:`, {
+          hasText: !!segment.text,
+          hasSpeaker: !!segment.speaker,
+          textLength: segment.text ? segment.text.length : 0,
+          speaker: segment.speaker,
+          text: segment.text ? segment.text.substring(0, 50) + '...' : 'sem texto'
+        });
+
         if (segment.speaker && segment.text && segment.text.trim()) {
           messages.push({
             speaker: segment.speaker,
@@ -622,8 +734,10 @@ function parseDialogueData(data) {
           });
         }
       });
-    } else {
-      // Fallback: parse do speakers_text
+    }
+    // FALLBACK 2: parse do speakers_text básico
+    else if (data.speakers_text) {
+      console.log('Processando speakers_text como fallback');
       const speakersText = data.speakers_text;
       const lines = speakersText.split('\n');
 
@@ -648,7 +762,11 @@ function parseDialogueData(data) {
           }
         }
       });
+    } else {
+      console.warn('Nenhum dado de diarização encontrado');
     }
+
+    console.log('Mensagens processadas:', messages.length);
   } catch (error) {
     console.error('Erro ao processar dados de diálogo:', error);
     return [];
@@ -658,8 +776,10 @@ function parseDialogueData(data) {
 }
 
 function renderDialogueMessages(container, messages) {
+  console.log('Renderizando mensagens de diálogo:', messages.length);
+
   let html = '';
-  const speakerColors = ['speaker-color-1', 'speaker-color-2', 'speaker-color-3', 'speaker-color-4', 'speaker-color-5'];
+  const speakerColors = ['speaker-0', 'speaker-1', 'speaker-2', 'speaker-3', 'speaker-4'];
   const speakerMap = new Map();
   let speakerIndex = 0;
 
@@ -673,18 +793,31 @@ function renderDialogueMessages(container, messages) {
     const colorClass = speakerMap.get(message.speaker);
     const speakerLabel = getSpeakerLabel(message.speaker);
 
+    console.log(`Renderizando mensagem ${index + 1}:`, {
+      speaker: message.speaker,
+      speakerLabel,
+      colorClass,
+      text: message.text.substring(0, 50) + '...'
+    });
+
     html += `
       <div class="dialogue-message ${colorClass}">
-        <div class="speaker-info">
+        <div class="message-header">
+          <div class="speaker-icon ${colorClass}"></div>
           <span class="speaker-name">${speakerLabel}</span>
-          <span class="timestamp">${message.timestamp}</span>
+          <span class="message-timestamp">${message.timestamp}</span>
         </div>
-        <div class="message-content">${escapeHtml(message.text)}</div>
+        <div class="message-text">${escapeHtml(message.text)}</div>
       </div>
     `;
   });
 
+  console.log('HTML gerado para diálogo:', html.length, 'caracteres');
   container.innerHTML = html;
+
+  // Verifica se o HTML foi inserido corretamente
+  const insertedMessages = container.querySelectorAll('.dialogue-message');
+  console.log('Mensagens inseridas no DOM:', insertedMessages.length);
 }
 
 function getSpeakerLabel(speaker) {
@@ -709,6 +842,18 @@ function escapeHtml(text) {
   const div = document.createElement('div');
   div.textContent = text;
   return div.innerHTML;
+}
+
+// Funções auxiliares
+function timeToSeconds(timeStr) {
+  // Converte formato MM:SS para segundos
+  const parts = timeStr.split(':');
+  if (parts.length === 2) {
+    const minutes = parseInt(parts[0]) || 0;
+    const seconds = parseInt(parts[1]) || 0;
+    return minutes * 60 + seconds;
+  }
+  return 0;
 }
 
 // Funções de Status e Progress
@@ -838,4 +983,53 @@ function startNew() {
   showTab('transcription');
 
   showStatus('Pronto para nova transcrição', 'success');
+}
+
+// Test function to validate dialogue functionality
+function testDialogueView() {
+  console.log('🧪 Testing dialogue view functionality...');
+
+  // Simulate test data
+  const testData = {
+    text: 'Olá, como você está? Estou bem, obrigado.',
+    speakers_text: 'SPEAKER_00: Olá, como você está?\nSPEAKER_01: Estou bem, obrigado.',
+    transcription_data: {
+      segments: [
+        {
+          speaker: 'SPEAKER_00',
+          text: 'Olá, como você está?',
+          start: 0.0,
+          end: 2.5
+        },
+        {
+          speaker: 'SPEAKER_01',
+          text: 'Estou bem, obrigado.',
+          start: 2.8,
+          end: 5.2
+        }
+      ]
+    }
+  };
+
+  console.log('Test data:', testData);
+
+  // Test the dialogue tab button finding
+  const dialogueTabBtn = document.getElementById('dialogue-tab-btn');
+  console.log('Dialogue tab button found:', !!dialogueTabBtn);
+
+  // Test the dialogue result element
+  const dialogueResult = document.getElementById('dialogue-result');
+  console.log('Dialogue result element found:', !!dialogueResult);
+
+  // Test data parsing
+  const parsedData = parseDialogueData(testData);
+  console.log('Parsed dialogue data:', parsedData);
+
+  // Test rendering if elements exist
+  if (dialogueResult && parsedData.length > 0) {
+    renderDialogueMessages(dialogueResult, parsedData);
+    console.log('✅ Dialogue view test completed successfully');
+  } else {
+    console.log('❌ Dialogue view test failed - missing elements or data');
+  }
 }

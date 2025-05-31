@@ -663,7 +663,7 @@ input:checked + .slider:before {
     background: white;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     line-height: 1.6;
-    white-space: pre-wrap;
+    white-space: normal;
 }
 
 /* Insights Controls */
@@ -767,4 +767,80 @@ input:checked + .slider:before {
 
 #use-diarization {
     display: none;
+}
+
+/* Melhorias específicas para a visualização do diálogo */
+.dialogue-view {
+    max-height: 500px;
+    overflow-y: auto;
+    background: #fafafa;
+    border-radius: 8px;
+    gap: 9px;
+    display: flex;
+    flex-direction: column;
+}
+.dialogue-view .dialogue-message {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    padding: 12px 15px;
+    border-radius: 12px;
+    border-left: 4px solid;
+    background: white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.dialogue-view .message-header {
+    display: flex !important;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+}
+
+.dialogue-view .speaker-icon {
+    width: 20px !important;
+    height: 20px !important;
+    border-radius: 50%;
+    display: inline-block !important;
+    flex-shrink: 0;
+}
+
+.dialogue-view .speaker-name {
+    font-weight: bold;
+    color: #333;
+    flex: 1;
+}
+
+.dialogue-view .message-timestamp {
+    font-size: 0.75rem;
+    color: #666;
+    opacity: 0.8;
+}
+
+.dialogue-view .message-text {
+    font-size: 1rem;
+    line-height: 1.5;
+    color: #444;
+    margin: 0;
+    word-wrap: break-word;
+}
+
+/* Scrollbar personalizada para a área do diálogo */
+.dialogue-view::-webkit-scrollbar {
+    width: 8px;
+}
+
+.dialogue-view::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.dialogue-view::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+}
+
+.dialogue-view::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
 }
