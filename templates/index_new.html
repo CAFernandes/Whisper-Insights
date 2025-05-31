@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transcritor de Áudio com Whisper - Web</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='assets/css/main.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎙️ Transcritor de Áudio</h1>
+            <p>Transcreva áudios usando inteligência artificial Whisper</p>
+        </div>
+
+        <div class="model-status" id="modelStatus">
+            <span>Verificando modelo Whisper...</span>
+        </div>
+
+        <div class="model-status" id="ollamaStatus" style="background: #fff3cd; border-color: #ffeaa7;">
+            <span>Verificando servidor Ollama...</span>
+        </div>
+
+        <div class="upload-section" id="uploadSection">
+            <div class="upload-icon">📁</div>
+            <div class="upload-text">
+                Arraste e solte seu arquivo de áudio aqui<br>
+                ou clique para selecionar
+            </div>
+            <input type="file" id="fileInput" class="file-input" accept=".mp3,.wav,.m4a,.ogg,.flac,.mp4,.avi">
+            <button class="btn" onclick="document.getElementById('fileInput').click()">
+                📂 Selecionar Arquivo
+            </button>
+        </div>
+
+        <div class="selected-file" id="selectedFile">
+            <div>📄 Arquivo selecionado:</div>
+            <div class="file-name" id="fileName"></div>
+
+            <!-- Seção de Configurações Avançadas -->
+            <div id="configSection" style="margin-top: 15px; padding: 15px; background: #f8f9ff; border: 2px solid #e3e7ff; border-radius: 10px;">
+                <h4 style="color: #333; margin-bottom: 10px;">⚙️ Configurações Avançadas</h4>
+
+                <!-- Controle de Diarização -->
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+                    <div>
+                        <strong style="color: #333;">🎤 Identificação de Locutores</strong>
+                        <p style="color: #666; font-size: 0.85rem; margin: 5px 0 0 0;">Identifica quem está falando em cada momento</p>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="diarizationToggle">
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+                <div id="diarizationStatus" style="font-size: 0.8rem; color: #666; margin-bottom: 10px;">
+                    Verificando disponibilidade...
+                </div>
+
+                <!-- Mensagem de ajuda quando diarização não disponível -->
+                <div id="diarizationHelp" style="display: none; background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 6px; padding: 10px; margin-top: 8px; font-size: 0.85rem;">
+                    <div style="color: #856404; margin-bottom: 8px;">
+                        <strong>💡 Quer identificar locutores?</strong>
+                    </div>
+                    <div style="color: #666; line-height: 1.4;">
+                        Configure um token gratuito do Hugging Face para habilitar esta funcionalidade.
+                        <br>
+                        <a href="#" onclick="showQuickGuide()" style="color: #667eea; text-decoration: none; font-weight: bold;">
+                            📖 Guia rápido (5 minutos)
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn" id="transcribeBtn" onclick="startTranscription()" style="margin-top: 15px;">
+                🎯 Transcrever Áudio
+            </button>
+        </div>
+
+        <div class="status" id="status"></div>
+
+        <div class="progress-bar" id="progressBar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+
+        <div class="result-section" id="resultSection">
+            <h3 style="margin-bottom: 15px; color: #333;">📝 Resultado da Transcrição:</h3>
+
+            <!-- Tabs para diferentes formatos -->
+            <div id="transcriptionTabs" style="margin-bottom: 15px; display: none;">
+                <button class="tab-btn active" onclick="showTranscriptionFormat('simple')" id="simpleTab">
+                    📄 Texto Simples
+                </button>
+                <button class="tab-btn" onclick="showTranscriptionFormat('timestamps')" id="timestampsTab">
+                    ⏰ Com Timestamps
+                </button>
+                <button class="tab-btn" onclick="showTranscriptionFormat('speakers')" id="speakersTab" style="display: none;">
+                    🎤 Com Locutores
+                </button>
+            </div>
+
+            <textarea class="result-textarea" id="resultText" placeholder="O texto transcrito aparecerá aqui..."></textarea>
+
+            <!-- Visualização do Diálogo (Diarização) -->
+            <div id="dialogueView" style="display: none; margin-top: 15px;">
+                <div style="background: #f8f9ff; border: 2px solid #e3e7ff; border-radius: 10px; padding: 20px;">
+                    <h4 style="color: #333; margin-bottom: 15px;">💬 Visualização do Diálogo</h4>
+                    <div id="dialogueContent" style="max-height: 400px; overflow-y: auto; border: 1px solid #e1e5e9; border-radius: 8px; padding: 15px; background: white;"></div>
+                </div>
+            </div>
+
+            <!-- Resumo de Locutores -->
+            <div id="speakersSummary" style="display: none; margin-top: 15px; padding: 15px; background: #f8f9ff; border-radius: 10px;">
+                <h4 style="color: #333; margin-bottom: 10px;">👥 Resumo dos Locutores:</h4>
+                <div id="speakersInfo"></div>
+            </div>
+
+            <div class="result-actions">
+                <button class="btn" onclick="copyToClipboard()">📋 Copiar Texto</button>
+                <button class="btn" onclick="downloadText()">💾 Baixar Texto</button>
+                <button class="btn" onclick="startNew()">🔄 Nova Transcrição</button>
+            </div>
+        </div>
+
+        <div class="result-section" id="insightsSection">
+            <h3 style="margin-bottom: 15px; color: #333;">🧠 Insights e Análises (IA):</h3>
+            <div class="result-textarea" id="insightsText" style="white-space: pre-wrap; overflow-y: auto; background: #f8f9fa; border: 2px solid #e9ecef;">
+                Os insights gerados pela IA aparecerão aqui...
+            </div>
+            <div class="result-actions" style="margin-bottom: 10px;">
+                <button class="btn" onclick="copyInsights()">📋 Copiar Insights</button>
+                <button class="btn" onclick="downloadInsights()">💾 Baixar Análise</button>
+            </div>
+            <div id="retryInsightsControls" style="display: none; margin-top: 15px;">
+                <h4 style="margin-bottom: 10px; color: #444;">Configurações para Insights:</h4>
+
+                <div style="margin-bottom: 15px;">
+                    <label for="ollamaModelSelect" style="display: block; margin-bottom: 5px; color: #555;">Selecionar Modelo Ollama:</label>
+                    <select id="ollamaModelSelect" class="result-textarea" style="min-height: auto; height: 40px; padding: 5px 10px; margin-bottom:10px;">
+                        <!-- Opções de modelo serão populadas aqui -->
+                    </select>
+                </div>
+
+                <p style="font-size: 0.9rem; color: #666; margin-bottom: 8px;">
+                    Edite o prompt abaixo. Para incluir a transcrição completa no seu prompt, certifique-se de que <strong>{{text}}</strong> está presente.
+                </p>
+                <textarea class="result-textarea" id="insightsPrompt" style="min-height: 100px; margin-bottom:10px;" placeholder="Edite o prompt para gerar novos insights..."></textarea>
+                <button class="btn" id="generateInsightsBtn" onclick="generateOrRetryInsights()">
+                    💡 Gerar/Regerar Insights
+                </button>
+            </div>
+        </div>
+
+        <!-- Seção de Configurações -->
+        <div id="insightsSection">
+        </div>
+
+        <!-- Seção de Configurações -->
+        <div id="configSection" style="display: none; margin-bottom: 20px;">
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        // Define o prompt padrão de insights injetado pelo Flask
+        const defaultInsightsPrompt = {{ default_insights_prompt|tojson|safe }};
+
+        // Função para definir o prompt padrão
+        function setDefaultInsightsPrompt(prompt) {
+            window.defaultInsightsPrompt = prompt;
+        }
+
+        // Define o prompt padrão globalmente
+        setDefaultInsightsPrompt(defaultInsightsPrompt);
+    </script>
+    <script src="{{ url_for('static', filename='assets/js/main.js') }}"></script>
+</body>
+</html>

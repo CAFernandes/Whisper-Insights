@@ -22,7 +22,8 @@ from config import (
 from helpers.file_utils import allowed_file, start_cleanup_scheduler # Modificado
 from services import whisper_service, ollama_service, task_service
 
-app = Flask(__name__)
+# Configuração do Flask com pasta estática personalizada
+app = Flask(__name__, static_folder='public', static_url_path='/static')
 app.secret_key = os.getenv('FLASK_SECRET_KEY', 'transcritor_audio_secret_key_2025') # Carrega do .env
 
 # Configurações do App a partir de config.py
