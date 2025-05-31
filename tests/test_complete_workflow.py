@@ -12,18 +12,24 @@ import requests
 import time
 import json
 import os
+import sys
+
+# Adicionar o diretório pai ao path para imports
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Configurações
 FLASK_URL = "http://localhost:5001"
+# Arquivos de teste agora estão na pasta tests/
+TEST_FILES_DIR = os.path.dirname(os.path.abspath(__file__))
 TEST_FILES = {
     "valid_audio": [
-        ("teste_audio.m4a", "audio/m4a"),
-        ("teste_audio.wav", "audio/wav"),
-        ("teste_audio.ogg", "audio/ogg"),
-        ("teste_audio.kwf", "audio/kwf")
+        (os.path.join(TEST_FILES_DIR, "teste_audio.m4a"), "audio/m4a"),
+        (os.path.join(TEST_FILES_DIR, "teste_audio.wav"), "audio/wav"),
+        (os.path.join(TEST_FILES_DIR, "teste_audio.ogg"), "audio/ogg"),
+        (os.path.join(TEST_FILES_DIR, "teste_audio.kwf"), "audio/kwf")
     ],
     "invalid_files": [
-        ("invalid_file.txt", "text/plain")
+        (os.path.join(TEST_FILES_DIR, "invalid_file.txt"), "text/plain")
     ]
 }
 

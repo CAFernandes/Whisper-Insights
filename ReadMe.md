@@ -174,20 +174,25 @@ O áudio contém uma conversa entre duas pessoas sobre estratégias de negócio.
 ## 🧪 Testes e Qualidade
 
 ### **Suíte de Testes Automatizados**
-- **`test_complete_workflow.py`**: Testa fluxo completo (upload → transcrição → insights)
-- **`test_units.py`**: Testes unitários para serviços, utilitários e validações
+- **`tests/test_complete_workflow.py`**: Testa fluxo completo (upload → transcrição → insights)
+- **`tests/test_units.py`**: Testes unitários para serviços, utilitários e validações
+- **`tests/test_dialogue_view.py`**: Testes da visualização de diálogo
+- **`tests/test_diarization_insights.py`**: Testes específicos de diarização
 - **Cobertura**: Upload, múltiplos formatos, erros, retry, diarização
 
 ### **Executar Testes**
 ```bash
 # Testes unitários
-python -m pytest test_units.py -v
+python -m pytest tests/test_units.py -v
 
 # Teste de workflow completo
-python test_complete_workflow.py
+python tests/test_complete_workflow.py
 
 # Todos os testes
-python -m pytest -v
+python -m pytest tests/ -v
+
+# Demonstração do sistema
+./tests/demo.sh
 ```
 
 ## 📁 Estrutura do Projeto
@@ -210,9 +215,14 @@ transcribe_audio/
 │   └── task_service.py          # Gerenciamento de tarefas
 ├── 📁 templates/                # 🌐 Interface web
 │   └── index.html
-├── 📁 static/                   # 🎨 Arquivos estáticos (CSS, JS)
+├── 📁 tests/                    # 🧪 Testes organizados
+│   ├── test_units.py            # Testes unitários
+│   ├── test_complete_workflow.py # Testes de integração
+│   ├── test_dialogue_view.py    # Testes da visualização
+│   ├── *.html                   # Páginas de teste
+│   ├── demo.sh                  # Script de demonstração
+│   └── teste_audio.*            # Arquivos de áudio para teste
 ├── 📁 uploads/                  # 📂 Arquivos temporários
-├── 🧪 test_*.py                 # Testes automatizados
 ├── 📋 requirements-web.txt      # Dependências
 └── 🚀 start_web.sh             # Script de inicialização
 ```

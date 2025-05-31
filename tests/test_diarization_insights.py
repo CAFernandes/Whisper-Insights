@@ -8,8 +8,8 @@ import json
 import sys
 import os
 
-# Adicionar diretório parent ao path para importar módulos do app
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+# Adicionar o diretório pai ao path para imports
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from services.task_service import update_task_status, get_task_info
 

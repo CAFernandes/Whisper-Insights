@@ -6,9 +6,13 @@ Execute com: python -m pytest test_units.py -v
 
 import pytest
 import os
+import sys
 import tempfile
 import json
 from unittest.mock import Mock, patch, MagicMock
+
+# Adicionar o diretório pai ao path para imports
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Importar os módulos a serem testados
 from helpers.file_utils import allowed_file, cleanup_old_files
