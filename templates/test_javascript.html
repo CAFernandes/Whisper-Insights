@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste JavaScript - Transcritor</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .status { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .loading { background: #fff3cd; }
+        .online { background: #d4edda; }
+        .offline { background: #f8d7da; }
+        button { padding: 10px 20px; margin: 10px 5px; }
+    </style>
+</head>
+<body>
+    <h1>Teste de Funcionalidade JavaScript</h1>
+
+    <div>
+        <h2>Status dos Serviços</h2>
+        <div class="status">
+            <span id="whisper-indicator">⚪</span>
+            <span>Whisper: </span>
+            <span id="whisper-status">Aguardando...</span>
+        </div>
+
+        <div class="status">
+            <span id="ollama-indicator">⚪</span>
+            <span>Ollama: </span>
+            <span id="ollama-status">Aguardando...</span>
+        </div>
+
+        <div class="status">
+            <span id="diarization-indicator">⚪</span>
+            <span>Diarização: </span>
+            <span id="diarization-status">Aguardando...</span>
+        </div>
+    </div>
+
+    <div>
+        <h2>Testes de Função</h2>
+        <button onclick="testCheckModel()">Testar Whisper</button>
+        <button onclick="testCheckOllama()">Testar Ollama</button>
+        <button onclick="testCheckDiarization()">Testar Diarização</button>
+    </div>
+
+    <div>
+        <h2>Log de Teste</h2>
+        <div id="test-log" style="background: #f8f9fa; padding: 10px; border-radius: 5px; min-height: 100px; white-space: pre-line;"></div>
+    </div>
+
+    <script src="/static/assets/js/main.js"></script>
+    <script>
+        function log(message) {
+            const logElement = document.getElementById('test-log');
+            logElement.textContent += new Date().toLocaleTimeString() + ': ' + message + '\n';
+        }
+
+        function testCheckModel() {
+            log('Testando verificação do modelo Whisper...');
+            checkModel();
+        }
+
+        function testCheckOllama() {
+            log('Testando verificação do Ollama...');
+            checkOllama();
+        }
+
+        function testCheckDiarization() {
+            log('Testando verificação da diarização...');
+            checkDiarizationAvailability();
+        }
+
+        // Testa se as funções estão carregadas
+        window.onload = function() {
+            log('Página carregada!');
+
+            if (typeof checkModel === 'function') {
+                log('✅ Função checkModel encontrada');
+            } else {
+                log('❌ Função checkModel não encontrada');
+            }
+
+            if (typeof checkOllama === 'function') {
+                log('✅ Função checkOllama encontrada');
+            } else {
+                log('❌ Função checkOllama não encontrada');
+            }
+
+            if (typeof checkDiarizationAvailability === 'function') {
+                log('✅ Função checkDiarizationAvailability encontrada');
+            } else {
+                log('❌ Função checkDiarizationAvailability não encontrada');
+            }
+
+            log('Carregando funções automaticamente...');
+            setTimeout(() => {
+                testCheckModel();
+                testCheckOllama();
+                testCheckDiarization();
+            }, 1000);
+        };
+    </script>
+</body>
+</html>
