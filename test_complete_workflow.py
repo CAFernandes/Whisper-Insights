@@ -59,9 +59,12 @@ def test_whisper_model():
         print(f"❌ Erro ao verificar modelo Whisper: {e}")
         return False
 
-def upload_file(file_path, content_type):
+def upload_file(file_path, content_type, enable_diarization=False):
     """Faz upload de um arquivo específico"""
     print(f"\n📤 Fazendo upload do arquivo: {file_path}")
+
+    if enable_diarization:
+        print("👥 Speaker diarization habilitado")
 
     if not os.path.exists(file_path):
         print(f"❌ Arquivo {file_path} não encontrado")
@@ -70,7 +73,13 @@ def upload_file(file_path, content_type):
     try:
         with open(file_path, 'rb') as f:
             files = {'file': (os.path.basename(file_path), f, content_type)}
-            response = requests.post(f"{FLASK_URL}/upload", files=files)
+
+            # Adicionar parâmetro de diarization se habilitado
+            data_params = {}
+            if enable_diarization:
+                data_params['enable_diarization'] = 'true'
+
+            response = requests.post(f"{FLASK_URL}/upload", files=files, data=data_params)
 
             if response.status_code == 413:
                 return None, "Arquivo muito grande (413 Request Entity Too Large)"
@@ -154,6 +163,33 @@ def monitor_progress(task_id, wait_for_insights=False):
                     text = data.get('text', '')
                     print(text[:500] + "..." if len(text) > 500 else text)
                     print("-" * 50)
+
+                # NOVA FUNCIONALIDADE: Exibir informações de speaker diarization
+                transcription_data = data.get('transcription_data', {})
+                if transcription_data.get('speakers_text'):
+                    print(f"\n👥 Speaker Diarization Detectado:")
+                    print("-" * 50)
+                    speakers_text = transcription_data['speakers_text']
+                    print(speakers_text[:800] + "..." if len(speakers_text) > 800 else speakers_text)
+                    print("-" * 50)
+
+                    # Exibir resumo de speakers se disponível
+                    speakers_summary = transcription_data.get('speakers_summary', {})
+                    if speakers_summary and 'speakers' in speakers_summary:
+                        speakers_info = speakers_summary['speakers']
+                        total_speakers = speakers_summary.get('total_speakers', 0)
+                        total_duration = speakers_summary.get('total_duration', 0)
+
+                        print(f"\n📊 Resumo de Locutores:")
+                        print(f"🎤 Total de speakers identificados: {total_speakers}")
+                        print(f"⏱️ Duração total: {total_duration:.1f}s")
+
+                        for speaker, info in speakers_info.items():
+                            duration = info.get('total_duration', 0)
+                            percentage = info.get('percentage', 0)
+                            segments = info.get('segments_count', 0)
+                            print(f"  • {speaker}: {duration:.1f}s ({percentage:.1f}%) - {segments} segmentos")
+                        print("-" * 50)
 
                 if 'insights' in data and data['insights']:
                     print(f"\n🧠 Insights gerados:")
@@ -257,6 +293,102 @@ def test_single_file_workflow(file_path, content_type, ollama_models):
     print(f"✅ Workflow completo para {file_path}")
     return True
 
+def test_speaker_diarization_availability():
+    """Testa se a funcionalidade de speaker diarization está disponível"""
+    print("🔍 Verificando disponibilidade de Speaker Diarization...")
+    try:
+        response = requests.get(f"{FLASK_URL}/check_diarization_availability")
+        data = response.json()
+        if data['available']:
+            print(f"✅ Speaker Diarization disponível")
+            return True
+        else:
+            print(f"❌ Speaker Diarization não disponível: {data['message']}")
+            print("ℹ️  Para configurar, consulte: docs/GUIA_RAPIDO_DIARIZACAO.md")
+            return False
+    except Exception as e:
+        print(f"❌ Erro ao verificar Speaker Diarization: {e}")
+        return False
+
+def test_speaker_diarization_workflow(file_path, content_type, ollama_models):
+    """Testa o workflow específico para speaker diarization"""
+    print(f"\n{'='*60}")
+    print(f"👥 Testando Speaker Diarization para: {file_path}")
+    print(f"{'='*60}")
+
+    # Upload com diarization habilitado
+    task_id, error = upload_file(file_path, content_type, enable_diarization=True)
+    if not task_id:
+        print(f"❌ Falha no upload: {error}")
+        return False
+
+    # Monitorar transcrição
+    result = monitor_progress(task_id, wait_for_insights=False)
+    if not result:
+        print(f"❌ Falha na transcrição")
+        return False
+
+    # Verificar se diarization foi aplicado
+    transcription_data = result.get('transcription_data', {})
+    has_diarization = bool(transcription_data.get('speakers_text'))
+
+    if has_diarization:
+        print("✅ Speaker diarization aplicado com sucesso!")
+
+        # Testar insights com contexto de múltiplos speakers
+        if ollama_models:
+            custom_prompt = """Analise esta transcrição que contém múltiplos speakers.
+            Forneça um resumo identificando os principais pontos de cada participante e a dinâmica da conversa: {{text}}"""
+
+            insights_success = test_retry_insights_with_prompt(task_id, ollama_models, custom_prompt)
+            if insights_success:
+                monitor_progress(task_id, wait_for_insights=False)
+    else:
+        print("⚠️ Speaker diarization não foi detectado (pode ser áudio com apenas um speaker ou diarização não configurada)")
+
+    return True
+
+def test_retry_insights_with_prompt(task_id, ollama_models, custom_prompt):
+    """Versão da função de retry com prompt customizado para speakers"""
+    print(f"\n🔄 Testando insights com prompt customizado para speakers...")
+
+    if not ollama_models:
+        print("⚠️ Nenhum modelo Ollama disponível")
+        return False
+
+    # Priorizar modelo llama se disponível
+    selected_model = None
+    for model in ollama_models:
+        if "llama" in model.lower():
+            selected_model = model
+            break
+
+    if not selected_model:
+        selected_model = ollama_models[0]
+
+    try:
+        payload = {
+            "prompt": custom_prompt,
+            "model_name": selected_model
+        }
+
+        response = requests.post(f"{FLASK_URL}/retry_insights/{task_id}",
+                               json=payload,
+                               headers={'Content-Type': 'application/json'})
+
+        data = response.json()
+
+        if data['success']:
+            print(f"✅ Insights com contexto de speakers gerados usando {selected_model}")
+            return True
+        else:
+            print(f"❌ Erro ao gerar insights: {data.get('message', 'Erro desconhecido')}")
+            return False
+
+    except Exception as e:
+        print(f"❌ Erro durante retry de insights: {e}")
+        return False
+
 def main():
     """Função principal do teste abrangente"""
     print("🚀 Iniciando suite de testes abrangente\n")
@@ -267,7 +399,9 @@ def main():
         "valid_files": 0,
         "invalid_files": 0,
         "no_file_upload": False,
-        "insights_retry": 0
+        "insights_retry": 0,
+        "speaker_diarization": False,
+        "speaker_diarization_workflow": False
     }
 
     # 1. Verificar modelo Whisper
@@ -311,7 +445,35 @@ def main():
 
     test_results["valid_files"] = successful_workflows
 
-    # 5. Resumo final
+    # 5. Verificar disponibilidade de Speaker Diarization
+    print(f"\n📋 FASE 4: Verificação de Speaker Diarization")
+    print("-" * 40)
+    diarization_available = test_speaker_diarization_availability()
+    test_results["speaker_diarization"] = diarization_available
+
+    # Se speaker diarization estiver disponível, testar workflow específico
+    if diarization_available:
+        print(f"\n📋 FASE 5: Testes de Workflow com Speaker Diarization")
+        print("-" * 40)
+
+        # Testar com um arquivo de áudio válido
+        test_file = None
+        for file_path, content_type in TEST_FILES["valid_audio"]:
+            if os.path.exists(file_path):
+                test_file = (file_path, content_type)
+                break
+
+        if test_file:
+            file_path, content_type = test_file
+            diarization_success = test_speaker_diarization_workflow(file_path, content_type, ollama_models)
+            test_results["speaker_diarization_workflow"] = diarization_success
+        else:
+            print("⚠️ Nenhum arquivo de teste válido encontrado para speaker diarization")
+            test_results["speaker_diarization_workflow"] = False
+    else:
+        test_results["speaker_diarization_workflow"] = False
+
+    # 6. Resumo final
     print(f"\n{'='*60}")
     print("📊 RESUMO DOS TESTES")
     print(f"{'='*60}")
@@ -321,16 +483,22 @@ def main():
     print(f"✅ Testes de arquivo inválido: {test_results['invalid_files']}")
     print(f"✅ Teste upload sem arquivo: {'OK' if test_results['no_file_upload'] else 'FALHA'}")
     print(f"✅ Testes de retry insights: {test_results['insights_retry']}")
+    print(f"✅ Disponibilidade de Speaker Diarization: {'OK' if test_results['speaker_diarization'] else 'FALHA'}")
+
+    if test_results["speaker_diarization"]:
+        print(f"✅ Workflow com Speaker Diarization: {'OK' if test_results.get('speaker_diarization_workflow', False) else 'FALHA'}")
 
     # Calcular score geral
-    total_tests = 6  # whisper, ollama, valid_files (como um teste), invalid_files, no_file, insights
+    total_tests = 8 if test_results["speaker_diarization"] else 7  # +1 se diarization workflow foi testado
     passed_tests = (
         (1 if test_results['whisper_model'] else 0) +
         (1 if test_results['ollama_connection'] else 0) +
         (1 if test_results['valid_files'] > 0 else 0) +
         (1 if test_results['invalid_files'] > 0 else 0) +
         (1 if test_results['no_file_upload'] else 0) +
-        (1 if test_results['insights_retry'] > 0 else 0)
+        (1 if test_results['insights_retry'] > 0 else 0) +
+        (1 if test_results['speaker_diarization'] else 0) +
+        (1 if test_results.get('speaker_diarization_workflow', False) else 0)
     )
 
     success_rate = (passed_tests / total_tests) * 100

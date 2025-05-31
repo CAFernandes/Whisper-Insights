@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste de Funções JavaScript</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 40px;
+            background: #f8f9fa;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .status {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .status.show {
+            display: block;
+        }
+
+        .status.loading {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+        }
+
+        .status.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #e1e5e9;
+            border-radius: 3px;
+            margin: 15px 0;
+            overflow: hidden;
+            display: none;
+        }
+
+        .progress-bar.show {
+            display: block;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #007bff, #0056b3);
+            animation: progress-animation 2s ease-in-out infinite;
+        }
+
+        @keyframes progress-animation {
+            0% { transform: translateX(-100%); }
+            50% { transform: translateX(0%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 16px;
+        }
+
+        .btn:hover {
+            background: #0056b3;
+        }
+
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Teste de Funções JavaScript</h1>
+        <p>Esta página testa as funções <code>showStatus</code> e <code>showProgress</code> que foram adicionadas ao sistema.</p>
+
+        <div class="status" id="status"></div>
+        <div class="progress-bar" id="progressBar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>Teste de Status</h3>
+            <button class="btn" onclick="testStatusLoading()">Mostrar Loading</button>
+            <button class="btn" onclick="testStatusSuccess()">Mostrar Success</button>
+            <button class="btn" onclick="testStatusError()">Mostrar Error</button>
+        </div>
+
+        <div class="test-section">
+            <h3>Teste de Progress</h3>
+            <button class="btn" onclick="testProgressShow()">Mostrar Progress</button>
+            <button class="btn" onclick="testProgressHide()">Esconder Progress</button>
+            <button class="btn" onclick="testProgressSequence()">Sequência Completa</button>
+        </div>
+
+        <div class="test-section">
+            <h3>Resultado do Teste</h3>
+            <div id="testResult" style="padding: 15px; background: #f8f9fa; border-radius: 6px; font-family: monospace;"></div>
+        </div>
+    </div>
+
+    <script>
+        // Funções de Status e Progress (copiadas do arquivo principal)
+        function showStatus(message, type) {
+            const status = document.getElementById('status');
+            if (status) {
+                status.textContent = message;
+                status.className = 'status show ' + type;
+
+                // Remove a classe 'show' após 5 segundos
+                setTimeout(() => {
+                    status.classList.remove('show');
+                }, 5000);
+
+                logTest(`showStatus("${message}", "${type}") - OK`);
+            } else {
+                logTest(`showStatus - ERRO: elemento #status não encontrado`);
+            }
+        }
+
+        function showProgress(show) {
+            const progressBar = document.getElementById('progressBar');
+            if (progressBar) {
+                if (show) {
+                    progressBar.classList.add('show');
+                } else {
+                    progressBar.classList.remove('show');
+                }
+
+                logTest(`showProgress(${show}) - OK`);
+            } else {
+                logTest(`showProgress - ERRO: elemento #progressBar não encontrado`);
+            }
+        }
+
+        // Funções de teste
+        function testStatusLoading() {
+            showStatus('Processando transcrição...', 'loading');
+        }
+
+        function testStatusSuccess() {
+            showStatus('Transcrição concluída com sucesso!', 'success');
+        }
+
+        function testStatusError() {
+            showStatus('Erro ao processar arquivo', 'error');
+        }
+
+        function testProgressShow() {
+            showProgress(true);
+        }
+
+        function testProgressHide() {
+            showProgress(false);
+        }
+
+        function testProgressSequence() {
+            logTest('=== INICIANDO SEQUÊNCIA COMPLETA ===');
+
+            showStatus('Enviando arquivo...', 'loading');
+            showProgress(true);
+
+            setTimeout(() => {
+                showStatus('Processando transcrição...', 'loading');
+            }, 2000);
+
+            setTimeout(() => {
+                showStatus('Transcrição concluída!', 'success');
+                showProgress(false);
+            }, 5000);
+        }
+
+        // Log de testes
+        function logTest(message) {
+            const resultDiv = document.getElementById('testResult');
+            const timestamp = new Date().toLocaleTimeString();
+            resultDiv.innerHTML += `[${timestamp}] ${message}<br>`;
+            resultDiv.scrollTop = resultDiv.scrollHeight;
+        }
+
+        // Teste inicial
+        window.onload = function() {
+            logTest('=== PÁGINA CARREGADA ===');
+            logTest('Testando existência dos elementos...');
+
+            const status = document.getElementById('status');
+            const progressBar = document.getElementById('progressBar');
+
+            logTest(`Elemento #status: ${status ? 'ENCONTRADO' : 'NÃO ENCONTRADO'}`);
+            logTest(`Elemento #progressBar: ${progressBar ? 'ENCONTRADO' : 'NÃO ENCONTRADO'}`);
+
+            if (status && progressBar) {
+                logTest('✅ Todos os elementos necessários estão presentes');
+                logTest('✅ As funções estão prontas para teste');
+            } else {
+                logTest('❌ Alguns elementos estão faltando');
+            }
+        };
+    </script>
+</body>
+</html>

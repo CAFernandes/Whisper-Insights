@@ -336,6 +336,67 @@ def check_diarization_availability_route():
         "message": "Diarização disponível" if available else "Diarização não disponível - verifique as dependências"
     })
 
+@app.route('/test_dialogue', methods=['GET'])
+def test_dialogue():
+    """Endpoint de teste para a visualização do diálogo com dados sintéticos."""
+    import json
+
+    # Dados sintéticos de diarização para teste
+    synthetic_data = {
+        'text': 'Olá, como você está? Estou bem, obrigado. E você? Também estou bem. Que bom!',
+        'speakers_text': 'SPEAKER_00: Olá, como você está?\nSPEAKER_01: Estou bem, obrigado. E você?\nSPEAKER_00: Também estou bem.\nSPEAKER_01: Que bom!',
+        'timestamped_text': '[00:00] Olá, como você está? [00:03] Estou bem, obrigado. E você? [00:06] Também estou bem. [00:08] Que bom!',
+        'speakers_summary': {
+            'speakers': [
+                {
+                    'label': 'SPEAKER_00',
+                    'total_duration': 5.5,
+                    'percentage': 60
+                },
+                {
+                    'label': 'SPEAKER_01',
+                    'total_duration': 3.7,
+                    'percentage': 40
+                }
+            ],
+            'total_speakers': 2,
+            'total_duration': 9.2,
+            'total_segments': 4
+        },
+        'transcription_data': {
+            'segments': [
+                {
+                    'speaker': 'SPEAKER_00',
+                    'text': 'Olá, como você está?',
+                    'start': 0.0,
+                    'end': 2.5
+                },
+                {
+                    'speaker': 'SPEAKER_01',
+                    'text': 'Estou bem, obrigado. E você?',
+                    'start': 2.8,
+                    'end': 5.2
+                },
+                {
+                    'speaker': 'SPEAKER_00',
+                    'text': 'Também estou bem.',
+                    'start': 5.5,
+                    'end': 7.0
+                },
+                {
+                    'speaker': 'SPEAKER_01',
+                    'text': 'Que bom!',
+                    'start': 7.3,
+                    'end': 8.5
+                }
+            ]
+        },
+        'available_ollama_models': ['llama3.2:3b', 'mistral:latest', 'phi3:latest'],
+        'current_prompt': 'Prompt de teste para insights.'
+    }
+
+    return jsonify(synthetic_data)
+
 # Inicialização do modelo Whisper
 logger.info("Tentando carregar o modelo Whisper na inicialização do aplicativo...") # Modificado
 model_loaded, model_msg = whisper_service.load_whisper_model() # Usa WHISPER_MODEL_NAME de config.py
