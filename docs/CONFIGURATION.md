@@ -325,7 +325,7 @@ def validate_config():
             errors.append(f"Não foi possível criar {UPLOAD_FOLDER}: {e}")
 
     # Verificar token do Hugging Face
-    if ENABLE_SPEAKER_DIARIZATION and not HUGGINGFACE_TOKEN:
+    if ENABLE_SPEAKER_DIARIZATION and not HUGGINGFACE_HUB_TOKEN:
         errors.append("Token do Hugging Face necessário para diarização")
 
     # Verificar Ollama
