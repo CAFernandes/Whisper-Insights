@@ -34,7 +34,7 @@ Este documento detalha as correções técnicas implementadas para garantir o fu
 
 ### ✅ Cenários Testados
 1. **Arquivos WAV padrão**: ✅ Funcionando
-2. **Arquivos MP3**: ✅ Funcionando  
+2. **Arquivos MP3**: ✅ Funcionando
 3. **Arquivos M4A**: ✅ Funcionando
 4. **Arquivos KWF**: ✅ Funcionando com fallback
 5. **Diarização com token**: ✅ Funcionando
@@ -67,5 +67,5 @@ O sistema agora fornece logs claros e informativos:
 
 ---
 
-**📅 Última atualização**: Junho 2025  
+**📅 Última atualização**: Junho 2025
 **🎯 Status**: 100% Operacional

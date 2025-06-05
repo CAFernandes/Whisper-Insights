@@ -72,5 +72,5 @@
 
 ---
 
-**📅 Atualizado**: Junho 2025  
+**📅 Atualizado**: Junho 2025
 **🎯 Status**: Documentação Completa

@@ -132,5 +132,5 @@ Este projeto usa [Versionamento Semântico](https://semver.org/lang/pt-BR/):
 
 ---
 
-**📅 Última atualização**: Junho 2025  
+**📅 Última atualização**: Junho 2025
 **👥 Mantenedores**: Equipe Whisper-Insights

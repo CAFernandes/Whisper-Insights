@@ -136,6 +136,6 @@ python cleanup_uploads.py
 
 O **Whisper-Insights** está **100% operacional** e pronto para uso em produção. Todos os recursos foram implementados, testados e validados com sucesso.
 
-**📅 Data de conclusão**: Junho 2025  
-**🎯 Status**: Produção-Ready  
+**📅 Data de conclusão**: Junho 2025
+**🎯 Status**: Produção-Ready
 **✅ Cobertura**: Funcionalidades completas
