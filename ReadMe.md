@@ -1,4 +1,4 @@
-# 🎙️ Transcritor de Áudio Web com Identificação de Locutores
+# 🎙️ Whisper-Insights
 
 Uma aplicação web profissional para transcrição de áudio usando IA avançada (Whisper + pyannote.audio) com identificação automática de locutores e geração de insights inteligentes.
 
@@ -17,6 +17,18 @@ Uma aplicação web profissional para transcrição de áudio usando IA avançad
 - 🧪 **Testes Completos**: Suíte automatizada de testes unitários e integração
 
 ## 🚀 Início Rápido
+
+### Pré-requisitos
+```bash
+# Clone ou baixe o projeto
+cd whisper-insights
+
+# Copie o arquivo de configuração
+cp .env.example .env
+
+# Edite o arquivo .env com suas configurações
+nano .env
+```
 
 ### Opção 1: Início Simples (Transcrição Básica)
 ```bash
@@ -129,47 +141,41 @@ O áudio contém uma conversa entre duas pessoas sobre estratégias de negócio.
 * Duração: 8 minutos
 ```
 
-## 🔧 Melhorias Recentes (v2024.05)
+## 🏆 Diferenciais da Aplicação
 
-### ✅ **Correções Implementadas**
-- **Arquivos KWF**: Corrigido erro "Cannot set attribute 'src'" com fallback automático
-- **Compatibilidade pyannote.audio 3.3.2**: Atualizado para suportar versão mais recente
-- **Warnings suprimidos**: Interface limpa sem mensagens desnecessárias do SpeechBrain
-- **Token Hugging Face**: Configuração automática via arquivo .env funcionando 100%
-- **🆕 Insights com diarização**: IA agora usa texto estruturado por locutor automaticamente
+### **🎯 Funcionalidades Avançadas**
+- **Identificação de Locutores**: Tecnologia de ponta com pyannote.audio
+- **IA Integrada**: Whisper + Llama para transcrição e análise
+- **Interface Profissional**: Design moderno e usabilidade excepcional
+- **Arquitetura Escalável**: Código modular e bem estruturado
 
-### 🚀 **Otimizações de Sistema**
-- **Detecção inteligente de formato**: Parâmetros otimizados para diferentes tipos de arquivo
-- **Fallback robusto**: Sistema se adapta automaticamente quando encontra incompatibilidades
-- **Logs informativos**: Mensagens claras para debugging e acompanhamento de status
-- **Processamento resiliente**: Aplicação não falha mais com formatos específicos
-- **🆕 Hierarquia de texto**: Sistema prioriza diarização > timestamps > texto simples para insights
+### **🔧 Qualidade Técnica**
+- **Testes Completos**: Cobertura abrangente de funcionalidades
+- **Tratamento de Erros**: Sistema robusto de fallbacks
+- **Performance Otimizada**: Threading e cache inteligente
+- **Documentação Completa**: Guias para todos os níveis
 
-### 🎯 **Status de Funcionalidades**
-- ✅ **Transcrição básica**: 100% funcional para todos os formatos
-- ✅ **Timestamps**: Funcionando com fallback automático para KWF
-- ✅ **Diarização**: Totalmente operacional com token configurado
-- ✅ **Insights IA**: Geração automática via Ollama funcionando
-- ✅ **🆕 Insights inteligentes**: Sistema usa automaticamente diarização quando disponível
-- ✅ **Interface Web**: Drag & drop e todas as funcionalidades ativas
+### **🚀 Pronto para Produção**
+- **Configuração Simples**: Funciona imediatamente
+- **Escalabilidade**: Preparado para integração com bancos de dados
+- **Segurança**: Validação rigorosa de arquivos
+- **Manutenibilidade**: Código limpo e bem documentado
 
-## 📚 Documentação Completa
+### 🚀 **Começando**
+- **[📦 Guia de Instalação](docs/INSTALLATION.md)** - Instalação completa em diferentes sistemas
+- **[⚙️ Configuração Avançada](docs/CONFIGURATION.md)** - Todas as opções de configuração detalhadas
+- **[🔧 Solução de Problemas](docs/TROUBLESHOOTING.md)** - Diagnóstico e resolução de problemas comuns
 
-### 🎯 **Para Usuários**
+### 🔌 **Para Desenvolvedores**
+- **[🔌 Documentação da API](docs/API_DOCUMENTATION.md)** - API REST completa com exemplos
 - **[⚡ Guia Rápido de Diarização](docs/GUIA_RAPIDO_DIARIZACAO.md)** - Configure identificação de locutores em 5 minutos
-- **[📖 Guia Completo de Configuração](docs/DIARIZATION_SETUP.md)** - Instruções detalhadas e solução de problemas
-
-### 🔧 **Para Desenvolvedores**
-- **[📋 Documentação Técnica](docs/DIARIZATION_COMPLETE.md)** - Detalhes da implementação de diarização
-- **[🚀 Status da Implementação](docs/IMPLEMENTACAO_CONCLUIDA.md)** - Resumo completo do projeto
-- **[🔍 Melhoria de Insights](DIARIZATION_INSIGHTS_IMPROVEMENT.md)** - Documentação da melhoria de diarização
-- **[✅ Relatório Final](MELHORIA_CONCLUIDA.md)** - Status da implementação da melhoria
+- **[📖 Configuração de Diarização](docs/DIARIZATION_SETUP.md)** - Instruções detalhadas para diarização
 - **[🌐 Documentação Web](docs/README-WEB.md)** - Detalhes específicos da interface web
 
-### 📜 **Histórico do Projeto**
-- **[📊 Projeto Concluído](docs/PROJETO_CONCLUIDO.md)** - Visão geral das funcionalidades
-- **[🔄 Conversão Completa](docs/CONVERSAO_COMPLETA.md)** - Processo de migração desktop → web
-- **[✅ Implementações Finalizadas](docs/IMPLEMENTACAO_FINALIZADA.md)** - Log detalhado de mudanças
+### 📋 **Referência Técnica**
+- **[🧪 Guia de Testes](tests/README.md)** - Como executar e criar testes
+- **[🔍 Logs e Debugging](docs/TROUBLESHOOTING.md#-ferramentas-de-debug)** - Ferramentas de diagnóstico
+- **[🚀 Deploy em Produção](docs/INSTALLATION.md#-deploy-em-produção)** - Configuração para ambiente de produção
 
 ## 🧪 Testes e Qualidade
 
@@ -195,36 +201,55 @@ python -m pytest tests/ -v
 ./tests/demo.sh
 ```
 
+**📋 Guia Completo**: [🧪 Documentação de Testes](tests/README.md)
+
 ## 📁 Estrutura do Projeto
 
 ```
-transcribe_audio/
+whisper-insights/
 ├── 📄 app.py                    # Servidor Flask principal
 ├── ⚙️ config.py                 # Configurações centralizadas
+├── 🔧 .env.example              # Arquivo de configuração exemplo
+├── 📋 requirements-web.txt      # Dependências Python
+├── 🚀 start_web.sh             # Script de inicialização
+├── 📄 cleanup_uploads.py        # Limpeza automática de arquivos
+├── 📋 CHANGELOG.md              # Histórico de versões
 ├── 📁 docs/                     # 📚 Documentação organizada
-│   ├── GUIA_RAPIDO_DIARIZACAO.md
-│   ├── DIARIZATION_SETUP.md
-│   ├── DIARIZATION_COMPLETE.md
-│   └── ...
+│   ├── INSTALLATION.md          # Guia de instalação detalhado
+│   ├── CONFIGURATION.md         # Configurações avançadas
+│   ├── API_DOCUMENTATION.md     # Documentação da API
+│   ├── TROUBLESHOOTING.md       # Solução de problemas
+│   ├── GUIA_RAPIDO_DIARIZACAO.md # Guia rápido de diarização
+│   ├── DIARIZATION_SETUP.md     # Setup detalhado de diarização
+│   └── README-WEB.md            # Documentação da interface web
 ├── 📁 helpers/                  # 🛠️ Utilitários
-│   └── file_utils.py
+│   ├── __init__.py
+│   └── file_utils.py           # Utilitários de arquivo
 ├── 📁 services/                 # 🏗️ Lógica de negócio
-│   ├── whisper_service.py       # Transcrição
+│   ├── __init__.py
+│   ├── whisper_service.py       # Transcrição com Whisper
 │   ├── diarization_service.py   # Identificação de locutores
-│   ├── ollama_service.py        # Insights IA
+│   ├── ollama_service.py        # Insights com IA
 │   └── task_service.py          # Gerenciamento de tarefas
-├── 📁 templates/                # 🌐 Interface web
-│   └── index.html
-├── 📁 tests/                    # 🧪 Testes organizados
+├── 📁 public/                   # 🌐 Arquivos estáticos
+│   └── assets/
+│       ├── css/main.css         # Estilos da aplicação
+│       └── js/main.js           # JavaScript da interface
+├── 📁 templates/                # 🌐 Templates HTML
+│   └── index.html              # Interface principal
+├── 📁 tests/                    # 🧪 Testes automatizados
+│   ├── __init__.py
+│   ├── README.md               # Guia de testes
 │   ├── test_units.py            # Testes unitários
 │   ├── test_complete_workflow.py # Testes de integração
 │   ├── test_dialogue_view.py    # Testes da visualização
-│   ├── *.html                   # Páginas de teste
 │   ├── demo.sh                  # Script de demonstração
 │   └── teste_audio.*            # Arquivos de áudio para teste
-├── 📁 uploads/                  # 📂 Arquivos temporários
-├── 📋 requirements-web.txt      # Dependências
-└── 🚀 start_web.sh             # Script de inicialização
+├── 📁 legacy/                   # 📜 Arquivos antigos
+│   ├── README.md               # Documentação de arquivos legacy
+│   └── transcritor_audio.py    # Versão desktop original
+├── 📁 uploads/                  # 📂 Arquivos temporários (auto-criado)
+└── 📁 transcribe/               # 🐍 Ambiente virtual Python
 ```
 
 ## 🏆 Diferenciais da Aplicação
@@ -281,10 +306,10 @@ gunicorn -w 4 -b 0.0.0.0:8000 app:app
 4. **🔍 Explorar Recursos**: Teste diferentes opções de visualização e exports
 
 ### **👨‍💻 Para Desenvolvedores**
-1. **📋 Estudar Arquitetura**: Consulte a [documentação técnica completa](docs/DIARIZATION_COMPLETE.md)
-2. **🔧 Ver Correções**: Analise as [correções técnicas implementadas](docs/CORRECOES_TECNICAS.md)
+1. **📋 Estudar Arquitetura**: Consulte a [📦 documentação de instalação](docs/INSTALLATION.md)
+2. **⚙️ Configuração**: Analise as [⚙️ configurações avançadas](docs/CONFIGURATION.md)
 3. **🧪 Executar Testes**: `python -m pytest -v` para validar instalação
-4. **⚙️ Personalizar**: Modifique `config.py` para suas necessidades específicas
+4. **🔌 Integrar API**: Use a [🔌 documentação da API](docs/API_DOCUMENTATION.md)
 
 ### **🏢 Para Empresas**
 1. **🌐 Deploy**: Configure Gunicorn + Nginx para produção
@@ -304,7 +329,8 @@ gunicorn -w 4 -b 0.0.0.0:8000 app:app
 ### **🐛 Problemas ou Dúvidas**
 - Consulte primeiro os guias na pasta `docs/`
 - Verifique os logs em `app.log`
-- Execute os testes para validar instalação
+- Execute os testes para validar instalação: `python -m pytest tests/ -v`
+- Consulte o [🔧 Guia de Solução de Problemas](docs/TROUBLESHOOTING.md)
 
 ### **🚀 Tecnologias Utilizadas**
 - **Backend**: Flask, OpenAI Whisper, pyannote.audio, Ollama
@@ -316,3 +342,5 @@ gunicorn -w 4 -b 0.0.0.0:8000 app:app
 ---
 
 **🎉 Uma aplicação completa de transcrição com IA avançada, pronta para uso profissional!**
+
+📋 **[Changelog](CHANGELOG.md)** | 🔧 **[Configuração](.env.example)** | 📚 **[Documentação](docs/)** | 🧪 **[Testes](tests/)**
