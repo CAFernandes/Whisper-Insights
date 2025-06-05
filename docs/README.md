@@ -1,4 +1,4 @@
-# 📚 Documentação - Transcritor de Áudio Web
+# 📚 Documentação - Whisper-Insights
 
 ##### **🔧 Correções e Melhorias**
 - **[CORRECOES_TECNICAS.md](CORRECOES_TECNICAS.md)**
@@ -7,12 +7,6 @@
   - 🔇 **Supressão de warnings** e logs limpos
   - 🛠️ **Sistema de fallback** robusto e inteligente
   - 📊 **Testes de validação** e resultados
-
-- **[DIARIZATION_INSIGHTS_IMPROVEMENT.md](../DIARIZATION_INSIGHTS_IMPROVEMENT.md)**
-  - 🧠 **Melhoria nos insights da IA** usando diarização como base
-  - 📊 **Sistema hierárquico** de seleção de texto (speakers → timestamped → simples)
-  - 🔍 **Logging inteligente** e rastreamento de fonte de dados
-  - ✅ **Compatibilidade total** com sistema existenteatus Atual - v2024.05 (Maio 2025)
 
 ### ✅ **Sistema 100% Funcional**
 - 🎤 **Diarização**: Totalmente operacional com token Hugging Face
@@ -33,6 +27,9 @@
 
 ## 📋 Índice da Documentação
 
+### 🚀 **Acesso Rápido**
+- **[INDICE_RAPIDO.md](INDICE_RAPIDO.md)** - 📇 **Links rápidos por situação**
+
 ### 🎯 **Para Usuários Finais**
 
 #### **⚡ Configuração Rápida**
@@ -51,11 +48,15 @@
 ### 🔧 **Para Desenvolvedores**
 
 #### **📋 Documentação Técnica**
-- **[DIARIZATION_COMPLETE.md](DIARIZATION_COMPLETE.md)**
-  - 🏗️ **Arquitetura completa** da implementação de diarização
-  - 🔍 **Detalhes técnicos** dos serviços criados
-  - 📊 **Lista completa** de funcionalidades implementadas
-  - 🧪 **Instruções de teste** e validação
+- **[API_DOCUMENTATION.md](API_DOCUMENTATION.md)**
+  - 🔌 **API REST completa** com exemplos
+  - 📡 **Endpoints** e parâmetros detalhados
+  - 💻 **Códigos de exemplo** para integração
+
+- **[CONFIGURATION.md](CONFIGURATION.md)**
+  - ⚙️ **Configurações avançadas** e variáveis de ambiente
+  - 🔧 **Personalização** do sistema
+  - 📋 **Opções de setup** para diferentes cenários
 
 #### **🔧 Correções e Melhorias**
 - **[CORRECOES_TECNICAS.md](CORRECOES_TECNICAS.md)**
@@ -79,30 +80,11 @@
   - 📈 **Validação de funcionamento** com testes
   - 🚀 **Guia de uso** para o estado atual
 
-#### **📜 Histórico Detalhado**
-- **[IMPLEMENTACAO_FINALIZADA.md](IMPLEMENTACAO_FINALIZADA.md)**
-  - 📝 **Log detalhado** de todas as mudanças
-  - 🔄 **Processo de desenvolvimento** passo-a-passo
-  - 🛠️ **Arquivos modificados** e criados
-
-### 📈 **Histórico do Projeto**
-
-#### **🏆 Visão Geral**
-- **[PROJETO_CONCLUIDO.md](PROJETO_CONCLUIDO.md)**
-  - 🎯 **Resumo executivo** do projeto completo
-  - ✨ **Principais funcionalidades** implementadas
-  - 🏗️ **Arquitetura geral** da aplicação
-
-#### **🔄 Processo de Conversão**
-- **[CONVERSAO_COMPLETA.md](CONVERSAO_COMPLETA.md)**
-  - 📱 **Migração desktop → web** detalhada
-  - 🔧 **Mudanças arquiteturais** implementadas
-  - 📊 **Comparativo** antes e depois
-
-- **[CONVERSAO_CONCLUIDA.md](CONVERSAO_CONCLUIDA.md)**
-  - ✅ **Status final** da conversão
-  - 🎉 **Resultados alcançados**
-  - 📋 **Checklist** de completude
+#### **📜 Histórico do Projeto**
+- **[CHANGELOG.md](../CHANGELOG.md)**
+  - 📝 **Histórico de versões** e mudanças
+  - 🔄 **Evolução** do projeto ao longo do tempo
+  - 🛠️ **Melhorias** e correções implementadas
 
 ---
 
@@ -115,10 +97,10 @@
 → [GUIA_RAPIDO_DIARIZACAO.md](GUIA_RAPIDO_DIARIZACAO.md) (5 minutos)
 
 ### **🔧 Sou desenvolvedor e quero entender o código**
-→ [DIARIZATION_COMPLETE.md](DIARIZATION_COMPLETE.md)
+→ [API_DOCUMENTATION.md](API_DOCUMENTATION.md) e [CONFIGURATION.md](CONFIGURATION.md)
 
 ### **🐛 Estou com problemas na configuração**
-→ [DIARIZATION_SETUP.md](DIARIZATION_SETUP.md) - Seção "Solução de Problemas"
+→ [TROUBLESHOOTING.md](TROUBLESHOOTING.md) - Soluções para problemas comuns
 
 ### **📊 Quero ver o que foi implementado**
 → [IMPLEMENTACAO_CONCLUIDA.md](IMPLEMENTACAO_CONCLUIDA.md)
@@ -143,15 +125,27 @@ docs/
 │   ├── DIARIZATION_COMPLETE.md        # 📋 Docs técnicas
 │   ├── README-WEB.md                  # 🌐 Interface web
 │   └── ../DIARIZATION_INSIGHTS_IMPROVEMENT.md  # 🧠 Melhoria insights IA
+## 📁 Estrutura da Documentação
+
+```
+docs/
+├── 📚 DOCUMENTAÇÃO PRINCIPAL
+│   ├── README.md                      # 📖 Este arquivo - índice geral
+│   ├── INSTALLATION.md               # 🚀 Guia de instalação
+│   ├── CONFIGURATION.md              # ⚙️ Configuração avançada
+│   └── API_DOCUMENTATION.md          # 🔌 API e endpoints
 │
-├── 📊 STATUS E RELATÓRIOS
-│   ├── IMPLEMENTACAO_CONCLUIDA.md     # ✅ Status atual
-│   └── IMPLEMENTACAO_FINALIZADA.md    # 📜 Log detalhado
+├── 🎯 GUIAS ESPECÍFICOS
+│   ├── GUIA_RAPIDO_DIARIZACAO.md     # ⚡ Setup rápido diarização
+│   ├── DIARIZATION_SETUP.md          # 🎤 Configuração detalhada
+│   ├── TROUBLESHOOTING.md            # 🐛 Solução de problemas
+│   └── README-WEB.md                 # 🌐 Interface web específica
 │
-└── 📈 HISTÓRICO DO PROJETO
-    ├── PROJETO_CONCLUIDO.md           # 🏆 Visão geral
-    ├── CONVERSAO_COMPLETA.md          # 🔄 Migração web
-    └── CONVERSAO_CONCLUIDA.md         # ✅ Status conversão
+├── 🔧 CORREÇÕES E MELHORIAS
+│   └── CORRECOES_TECNICAS.md         # 🚨 Fixes implementados
+│
+└── 📊 STATUS E RELATÓRIOS
+    └── IMPLEMENTACAO_CONCLUIDA.md    # ✅ Status 100% funcional
 ```
 
 ---
