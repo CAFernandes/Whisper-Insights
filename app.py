@@ -398,6 +398,71 @@ def test_dialogue():
 
     return jsonify(synthetic_data)
 
+# ====================================
+# Health Check Endpoint para Docker
+# ====================================
+@app.route('/health')
+def health_check():
+    """
+    Endpoint de health check para Docker e monitoramento.
+    Verifica se a aplicação está funcionando corretamente.
+    """
+    try:
+        # Verificar se o modelo Whisper está carregado
+        whisper_status = whisper_service.is_model_loaded()
+
+        # Verificar se a pasta de uploads existe e é acessível
+        uploads_accessible = os.path.exists(UPLOAD_FOLDER) and os.access(UPLOAD_FOLDER, os.W_OK)
+
+        # Verificar conectividade com Ollama (opcional)
+        ollama_status = ollama_service.is_ollama_available()
+
+        # Verificar diarização (opcional)
+        try:
+            from services.diarization_service import is_diarization_available
+            diarization_status = is_diarization_available()
+        except Exception:
+            diarization_status = False
+
+        # Status geral
+        status = "healthy" if (whisper_status and uploads_accessible) else "unhealthy"
+
+        health_data = {
+            "status": status,
+            "timestamp": time.time(),
+            "services": {
+                "whisper": {
+                    "status": "available" if whisper_status else "unavailable",
+                    "model": WHISPER_MODEL_NAME
+                },
+                "uploads": {
+                    "status": "accessible" if uploads_accessible else "inaccessible",
+                    "path": UPLOAD_FOLDER
+                },
+                "ollama": {
+                    "status": "available" if ollama_status else "unavailable",
+                    "url": OLLAMA_BASE_URL
+                },
+                "diarization": {
+                    "status": "available" if diarization_status else "unavailable"
+                }
+            },
+            "version": "1.0.0",
+            "uptime": time.time()
+        }
+
+        # Retornar status HTTP 200 se healthy, 503 se unhealthy
+        status_code = 200 if status == "healthy" else 503
+        return jsonify(health_data), status_code
+
+    except Exception as e:
+        logger.error(f"Health check error: {e}")
+        return jsonify({
+            "status": "error",
+            "message": str(e),
+            "timestamp": time.time()
+        }), 500
+
 # Inicialização do modelo Whisper
 logger.info("Tentando carregar o modelo Whisper na inicialização do aplicativo...") # Modificado
 model_loaded, model_msg = whisper_service.load_whisper_model() # Usa WHISPER_MODEL_NAME de config.py

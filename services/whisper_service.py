@@ -215,3 +215,13 @@ def transcribe_audio_simple(file_path):
     if error:
         return None, error
     return result['text'], None
+
+def is_model_loaded():
+    """
+    Verifica se o modelo Whisper está carregado.
+
+    Returns:
+        bool: True se o modelo está carregado, False caso contrário
+    """
+    global loaded_model
+    return loaded_model is not None

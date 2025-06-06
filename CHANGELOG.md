@@ -7,6 +7,24 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 
 ## [Não Lançado]
 
+### Corrigido
+- 🐳 **Docker Health Check**: Resolvido problema de arquivo `ollama_service.py` vazio no container
+- 🔍 **Error 500 no Health Check**: Corrigido falha na verificação de saúde da aplicação
+- 📦 **Build do Container**: Melhorado processo de cópia de arquivos durante o build
+- 🔧 **Diagnóstico**: Adicionados logs e verificações para identificar problemas de build
+
+### Adicionado
+- 📋 **Documentação Docker**: Seção dedicada a problemas com Docker no Troubleshooting
+- 🔍 **Ferramentas de Debug**: Comandos para verificar status de containers e health checks
+- 📊 **Logs Detalhados**: Melhor rastreamento de problemas em ambiente Docker
+
+### Alterado
+- 📚 **TROUBLESHOOTING.md**: Adicionada seção completa para problemas com Docker
+- 🛠️ **CORRECOES_TECNICAS.md**: Documentada correção do health check Docker
+- 🔄 **Processo de Build**: Validação automática de arquivos após reconstrução
+
+## [Versão Anterior]
+
 ### Adicionado
 - Documentação completa reorganizada
 - Arquivo `.env.example` com todas as configurações

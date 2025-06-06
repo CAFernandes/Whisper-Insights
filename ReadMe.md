@@ -49,7 +49,26 @@ python app.py
 
 **Acesse**: http://localhost:5001
 
-### Opção 3: Com Identificação de Locutores (5 minutos extra)
+### Opção 3: Docker (Recomendado para Produção)
+```bash
+# Clone o projeto
+git clone <repository-url>
+cd whisper-insights
+
+# Configure o ambiente
+cp .env.example .env
+# Edite o .env com suas configurações
+
+# Inicie com Docker
+docker-compose up -d
+
+# Acesse a aplicação
+http://localhost:5001
+```
+
+**📖 Guia Completo**: [🐳 Documentação Docker](docs/DOCKER_GUIDE.md)
+
+### Opção 4: Com Identificação de Locutores (5 minutos extra)
 Para habilitar a identificação automática de locutores, siga o **[📖 Guia Rápido de Diarização](docs/GUIA_RAPIDO_DIARIZACAO.md)** - leva apenas 5 minutos!
 
 ## 🎯 Funcionalidades Disponíveis
@@ -162,7 +181,9 @@ O áudio contém uma conversa entre duas pessoas sobre estratégias de negócio.
 - **Manutenibilidade**: Código limpo e bem documentado
 
 ### 🚀 **Começando**
+- **[📇 Índice Rápido](docs/INDICE_RAPIDO.md)** - Navegação rápida por toda a documentação
 - **[📦 Guia de Instalação](docs/INSTALLATION.md)** - Instalação completa em diferentes sistemas
+- **[🐳 Guia Docker](docs/DOCKER_GUIDE.md)** - Deploy com Docker, configuração, monitoramento e troubleshooting
 - **[⚙️ Configuração Avançada](docs/CONFIGURATION.md)** - Todas as opções de configuração detalhadas
 - **[🔧 Solução de Problemas](docs/TROUBLESHOOTING.md)** - Diagnóstico e resolução de problemas comuns
 
@@ -173,6 +194,7 @@ O áudio contém uma conversa entre duas pessoas sobre estratégias de negócio.
 - **[🌐 Documentação Web](docs/README-WEB.md)** - Detalhes específicos da interface web
 
 ### 📋 **Referência Técnica**
+- **[🔧 Correções Técnicas](docs/CORRECOES_TECNICAS.md)** - Detalhamento das correções implementadas (incluindo Docker health check)
 - **[🧪 Guia de Testes](tests/README.md)** - Como executar e criar testes
 - **[🔍 Logs e Debugging](docs/TROUBLESHOOTING.md#-ferramentas-de-debug)** - Ferramentas de diagnóstico
 - **[🚀 Deploy em Produção](docs/INSTALLATION.md#-deploy-em-produção)** - Configuração para ambiente de produção
@@ -343,4 +365,11 @@ gunicorn -w 4 -b 0.0.0.0:8000 app:app
 
 **🎉 Uma aplicação completa de transcrição com IA avançada, pronta para uso profissional!**
 
-📋 **[Changelog](CHANGELOG.md)** | 🔧 **[Configuração](.env.example)** | 📚 **[Documentação](docs/)** | 🧪 **[Testes](tests/)**
+## 📈 Status Atual (Junho 2025)
+- ✅ **100% Operacional** - Todos os recursos funcionando
+- 🐳 **Docker Pronto** - Deploy em containers totalmente suportado
+- 🔧 **Correções Aplicadas** - Health check e outras melhorias implementadas
+- 📚 **Documentação Completa** - Guias para todos os cenários
+- 🧪 **Testes Validados** - Suíte completa de testes automatizados
+
+📇 **[Índice Rápido](docs/INDICE_RAPIDO.md)** | 📋 **[Changelog](CHANGELOG.md)** | 🔧 **[Configuração](.env.example)** | 📚 **[Documentação](docs/)** | 🧪 **[Testes](tests/)**

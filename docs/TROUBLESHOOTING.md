@@ -193,6 +193,63 @@ UPLOAD_FILE_MAX_AGE_MINUTES=5
 find uploads/ -type f -mmin +60 -delete
 ```
 
+### 6. Problemas com Docker
+
+#### Health Check Falhando (Erro 500)
+```bash
+# Sintomas: Container mostra "unhealthy" ou health check retorna HTTP 500
+# Causa comum: Arquivo ollama_service.py vazio dentro do container
+
+# Verificação do problema:
+docker exec whisper-insights-app cat services/ollama_service.py
+# Se o arquivo estiver vazio (0 bytes), aplicar solução:
+
+# Solução:
+docker-compose down
+docker-compose build --no-cache  # Reconstrói imagem
+docker-compose up -d
+
+# Validação:
+curl http://localhost:5001/health  # Deve retornar status "healthy"
+docker ps  # Container deve mostrar "(healthy)"
+```
+
+#### Container Não Inicia
+```bash
+# Verificar logs do container
+docker-compose logs whisper-insights
+
+# Problemas comuns:
+# 1. Porta em uso
+lsof -i :5001
+sudo kill -9 $(lsof -t -i:5001)
+
+# 2. Permissões de volume
+sudo chown -R $USER:$USER uploads logs
+chmod -R 755 uploads logs
+
+# 3. Arquivo .env ausente
+cp .env.example .env
+
+# 4. Memória insuficiente
+docker system prune -f  # Liberar espaço
+```
+
+#### Ollama Não Responde
+```bash
+# Verificar status do container Ollama
+docker ps | grep ollama
+
+# Verificar logs
+docker-compose logs ollama
+
+# Restart apenas do Ollama
+docker-compose restart ollama
+
+# Testar conectividade
+curl http://localhost:11434/api/tags
+```
+
 ## 🔍 Diagnóstico Avançado
 
 ### Script de Diagnóstico Automático
