@@ -135,7 +135,7 @@ docker volume ls | grep whisper
 make backup-volumes
 
 # Backup manual
-docker run --rm -v whispper_insights_whisper_models:/data \
+docker run --rm -v whisper-insights_whisper_models:/data \
   -v $(pwd):/backup alpine tar czf /backup/whisper_models.tar.gz /data
 ```
 
