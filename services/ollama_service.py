@@ -1,9 +1,25 @@
-# Serviço para interagir com o servidor Ollama para geração de insights
+# Serviço para interagir com o servidor Ollama para geração de insights
 import requests
 import json
 from config import OLLAMA_BASE_URL
 
+def is_ollama_available():
+    """
+    Verifica se o serviço Ollama está disponível.
+    Retorna True se disponível, False caso contrário.
+    """
+    try:
+        response = requests.get(f"{OLLAMA_BASE_URL}/api/tags", timeout=5)
+        response.raise_for_status()
+        return True
+    except requests.exceptions.RequestException:
+        return False
+
 def get_available_ollama_models():
+    """
+    Obtém a lista de modelos disponíveis no Ollama.
+    Retorna: (lista_modelos, conectado, quantidade_modelos)
+    """
     try:
         response = requests.get(f"{OLLAMA_BASE_URL}/api/tags")
         response.raise_for_status()
@@ -15,6 +31,17 @@ def get_available_ollama_models():
         return [], False, 0
 
 def generate_ollama_insights(text, prompt_template, model_name):
+    """
+    Gera insights usando o modelo Ollama especificado.
+
+    Args:
+        text: Texto para análise
+        prompt_template: Template do prompt (deve conter {{text}})
+        model_name: Nome do modelo Ollama
+
+    Returns:
+        (resposta, erro) - Tupla com resposta ou None, e mensagem de erro ou None
+    """
     ollama_models, ollama_connected, _ = get_available_ollama_models()
     if not ollama_connected:
         return None, "Ollama não está acessível."
